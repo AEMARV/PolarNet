@@ -3,8 +3,8 @@ function [net, info] = cnn_cifar(varargin)
 %    The demo includes two standard model: LeNet and Network in
 %    Network (NIN). Use the 'modelType' option to choose one.
 
-run(fullfile(fileparts(mfilename('fullpath')), ...
-  '..', '..', 'matlab', 'vl_setupnn.m')) ;
+%run(fullfile(fileparts(mfilename('fullpath')), ...
+%  '..', '..', 'matlab', 'vl_setupnn.m')) ;
 
 opts.modelType = 'lenet' ;
 [opts, varargin] = vl_argparse(opts, varargin) ;
@@ -19,6 +19,8 @@ opts.whitenData = true ;
 opts.contrastNormalization = true ;
 opts.networkType = 'simplenn' ;
 opts.train = struct() ;
+opts.usePolar = false;
+opts.polarOpts = [];
 opts = vl_argparse(opts, varargin) ;
 if ~isfield(opts.train, 'gpus'), opts.train.gpus = []; end;
 
@@ -28,7 +30,7 @@ if ~isfield(opts.train, 'gpus'), opts.train.gpus = []; end;
 
 switch opts.modelType
   case 'lenet'
-    net = cnn_cifar_init('networkType', opts.networkType) ;
+    net = cnn_cifar_init('networkType', opts.networkType,'usePolar',opts.usePolar,'polarOpts',opts.polarOpts) ;
   case 'nin'
     net = cnn_cifar_init_nin('networkType', opts.networkType) ;
   otherwise

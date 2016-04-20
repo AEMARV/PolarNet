@@ -41,6 +41,8 @@ opts.errorFunction = 'multiclass' ;
 opts.errorLabels = {} ;
 opts.plotDiagnostics = false ;
 opts.plotStatistics = true;
+opts.polarOpts = [];
+opts.usePolar = false;
 opts = vl_argparse(opts, varargin) ;
 
 if ~exist(opts.expDir, 'dir'), mkdir(opts.expDir) ; end
@@ -304,6 +306,9 @@ for t=1:opts.batchSize:numel(subset)
       evalMode = 'test' ;
     end
     net.layers{end}.class = labels ;
+    if opts.usePolar && opts.polarOpts.useUncertainty
+    [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,im,isFliped,imdb,batch,opts.polarOpts.uncOpts);
+    end
     res = vl_simplenn(net, im, dzdy, res, ...
                       'accumulate', s ~= 1, ...
                       'mode', evalMode, ...
