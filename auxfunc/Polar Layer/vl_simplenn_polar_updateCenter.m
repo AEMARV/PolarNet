@@ -37,15 +37,20 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    % 
    % opts  : same struct in the training function
    % s is the batch number
+   atten_LR = opts.polarOpts.uncOpts.atten_LR;
+   isNormalize = opts.polarOpts.uncOpts.isNormalize;
+   isMaximize = opts.polarOpts.uncOpts.isMaximize;
    if atten_LR == 0
        
        return;
    end
-   unc_net = net;
+   
    
    [net.layers{1}.centers,imdb,batch] = getCentersImdb(imdb,batch,isFliped);
+   unc_net = net;
    CentHist = net.layers{1}.centers;
    [unc_net.layers{end},forwardHandle,backwardHandle] = createUncertainLayer();
+   unc_net =vl_simplenn_tidy(unc_net);
    if isMaximize
        dzdyunc = gpuArray(1);
    else
@@ -63,12 +68,14 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    % extracts dzdrow-col 
    dzdx0 = res_c(1).dzdrow;
    dzdx1 = res_c(1).dzdcol;
+   if isNormalize
    % finds dzdrow-col with more than 1 pixel shift
    GTO = find(  (dzdx0 .^ 2 + dzdx1 .^ 2)  > 1/32);
    % normalize the dzdrow-col
    R0 = sqrt(dzdx0.^2 + dzdx1.^2);
    dzdx0(GTO) = dzdx0(GTO)./R0(GTO);
    dzdx1(GTO) = dzdx1(GTO)./R0(GTO);
+   end
    % step
    dzdx0  = dzdx0 * atten_LR;
    dzdx1 = dzdx1 * atten_LR;

@@ -60,7 +60,9 @@ end
   'expDir', opts.expDir, ...
   net.meta.trainOpts, ...
   opts.train, ...
-  'val', find(imdb.images.set == 3)) ;
+  'val', find(imdb.images.set == 3)...
+  ,'usePolar',opts.usePolar...
+  ,'polarOpts',opts.polarOpts) ;
 
 % -------------------------------------------------------------------------
 function fn = getBatch(opts)
@@ -74,11 +76,15 @@ switch lower(opts.networkType)
 end
 
 % -------------------------------------------------------------------------
-function [images, labels] = getSimpleNNBatch(imdb, batch)
+function [images, labels,isFliped] = getSimpleNNBatch(imdb, batch)
 % -------------------------------------------------------------------------
 images = imdb.images.data(:,:,:,batch) ;
 labels = imdb.images.labels(1,batch) ;
-if rand > 0.5, images=fliplr(images) ; end
+isFliped = false;
+if rand > 0.5
+    images=fliplr(images) ; 
+    isFliped = true;
+end
 
 % -------------------------------------------------------------------------
 function inputs = getDagNNBatch(opts, imdb, batch)

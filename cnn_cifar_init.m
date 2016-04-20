@@ -1,6 +1,7 @@
 function net = cnn_cifar_init(varargin)
 opts.networkType = 'simplenn' ;
 opts.usePolar = false;
+opts.polarOpts = [];
 opts = vl_argparse(opts, varargin) ;
 
 lr = [.1 2] ;
@@ -8,7 +9,7 @@ lr = [.1 2] ;
 % Define network CIFAR10-quick
 net.layers = {} ;
 if opts.usePolar
-if isEmpty(opts.polarOpts)
+if isempty(opts.polarOpts)
 opts.polarOpts = updateOptsPolar();
 warning('Polar options are empty:: values are set to default\n please pass the polarOpts as a struct to cnn_cifar');
 end
