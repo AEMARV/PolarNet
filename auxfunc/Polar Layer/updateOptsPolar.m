@@ -1,9 +1,8 @@
 function opts = updateOptsPolar(varargin)
-%% function opts = updateOptsPolar(opts,type,upSampleRate,DownSampleRate,filterSigma,interval,extrapval)
+%% function opts = updateOptsPolar(param1,val1,param2,val2,param3,val3 ....)
 % updateOptsPolar gets a set of parameters required for polar layer and
 % sets fields of opts according to inputs
-% if the number of input arguments is 1, it will set the values to the
-% default values.
+% 
 %
 % Inputs:
 % opts : struct of options for the network
@@ -51,9 +50,12 @@ function opts = updateOptsPolar(varargin)
 %    opts.kernel = single(fspecial('gaussian',ceil(double(2*opts.filterSigma *3)),double(opts.filterSigma)));
 %    
 %    opts.extrapval = single(0);
+%    
+%    opts.uncOpts = [];   %% this option is a struct, which you can
+%    produce with updateOptsUnc
 
 
-    opts.
+    
     opts.type = 0;
     opts.usePolar = true;
     opts.useUncertainty = false;
@@ -64,6 +66,7 @@ function opts = updateOptsPolar(varargin)
     opts.interval = 6;
     opts.kernel = single(fspecial('gaussian',ceil(double(2*opts.filterSigma *3)),double(opts.filterSigma)));
     opts.extrapval = single(0);
+    opts.uncOpts = updateOptsUnc;
     opts = vl_argparse(opts,varargin);
     opts.kernel = single(fspecial('gaussian',ceil(double(2*opts.filterSigma *3)),double(opts.filterSigma)));
     opts.extrapval = single(opts.extrapval);

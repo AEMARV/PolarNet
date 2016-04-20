@@ -50,7 +50,7 @@ if isempty(opts.train), opts.train = find(imdb.images.set==1) ; end
 if isempty(opts.val), opts.val = find(imdb.images.set==2) ; end
 if isnan(opts.train), opts.train = [] ; end
 if isnan(opts.val), opts.val = [] ; end
-
+imdb = createCentHist(imdb,1);
 % -------------------------------------------------------------------------
 %                                                            Initialization
 % -------------------------------------------------------------------------
@@ -106,6 +106,7 @@ start = opts.continue * findLastCheckpoint(opts.expDir) ;
 if start >= 1
   fprintf('%s: resuming by loading epoch %d\n', mfilename, start) ;
   [net, stats] = loadState(modelPath(start)) ;
+  imdb = saveLoadCenter(opts.expDir,imdb,start,false)
 end
 
 for epoch=start+1:opts.numEpochs
@@ -123,7 +124,9 @@ for epoch=start+1:opts.numEpochs
   state.learningRate = opts.learningRate(min(epoch, numel(opts.learningRate))) ;
   state.train = opts.train(randperm(numel(opts.train))) ; % shuffle
   state.val = opts.val(randperm(numel(opts.val))) ;
+  if epoch == start+1
   state.imdb = imdb ;
+  end
 
   if numel(opts.gpus) <= 1
     [net,stats.train(epoch),prof] = process_epoch(net, state, opts, 'train') ;
@@ -153,7 +156,8 @@ for epoch=start+1:opts.numEpochs
   if ~evaluateMode
     saveState(modelPath(epoch), net, stats) ;
   end
-
+  % saves the state
+  imdb  = saveLoadCenter(opts.expDir,imdb,epoch,true);
   if opts.plotStatistics
     switchFigure(1) ; clf ;
     plots = setdiff(...
@@ -281,7 +285,7 @@ for t=1:opts.batchSize:numel(subset)
     num = num + numel(batch) ;
     if numel(batch) == 0, continue ; end
 
-    [im, labels] = state.getBatch(state.imdb, batch) ;
+    [im, labels,isFliped] = state.getBatch(state.imdb, batch) ;
 
     if opts.prefetch
       if s == opts.numSubBatches
@@ -307,7 +311,8 @@ for t=1:opts.batchSize:numel(subset)
     end
     net.layers{end}.class = labels ;
     if opts.usePolar && opts.polarOpts.useUncertainty
-    [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,im,isFliped,imdb,batch,opts.polarOpts.uncOpts);
+    res_c = res;
+    [net,state.imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im,isFliped,state.imdb,batch,opts,s,res_c);
     end
     res = vl_simplenn(net, im, dzdy, res, ...
                       'accumulate', s ~= 1, ...
