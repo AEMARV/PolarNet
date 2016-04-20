@@ -1,12 +1,19 @@
 function net = cnn_cifar_init(varargin)
 opts.networkType = 'simplenn' ;
+opts.usePolar = false;
 opts = vl_argparse(opts, varargin) ;
 
 lr = [.1 2] ;
 
 % Define network CIFAR10-quick
 net.layers = {} ;
-
+if opts.usePolar
+if isEmpty(opts.polarOpts)
+opts.polarOpts = updateOptsPolar();
+warning('Polar options are empty:: values are set to default\n please pass the polarOpts as a struct to cnn_cifar');
+end
+net.layers{end+1} = createPolarLayer(opts.polarOpts);
+end
 % Block 1
 net.layers{end+1} = struct('type', 'conv', ...
                            'weights', {{0.01*randn(5,5,3,32, 'single'), zeros(1, 32, 'single')}}, ...
