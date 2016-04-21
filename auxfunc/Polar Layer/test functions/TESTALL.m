@@ -26,7 +26,7 @@ procImage = imdb.images.data(:,:,:,indices);
 labels = imdb.images.labels(indices);
 fn = getFetchImageFunc('cifar');
 pureImage = fn(indices,opts.imagePath);
-detect_radial(pureImage,procImage,isTrain,labels,opts);
+movie = detect_radial(pureImage,procImage,indices,isTrain,labels,opts);
 end
 
 function fn = getFetchImageFunc(dataBaseName)
@@ -94,4 +94,10 @@ function Indices = generateIndex(count,Limit)
     if scope< 0,error('start index is bigger than end Index');end
     RANDOMS = RANDOMS * scope; % between 0 to scope
     Indices = RANDOMS +Limit(1); %between Limit1 to scope + Limit1 (Limit 2)
+end
+function pasteMovie(movie,opts)
+assert(2*opts.numberOfVideos == size(movie,4),'matrix size does not match the number of videos');
+    for i = 1 : size(movie,4)
+        
+    end
 end
