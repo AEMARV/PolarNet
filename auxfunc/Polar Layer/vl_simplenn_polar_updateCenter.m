@@ -37,16 +37,21 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    % 
    % opts  : same struct in the training function
    % s is the batch number
+   if ~opts.polarOpts.useUncertainty
+        [net.layers{1}.centers,imdb,batch] = getCentersImdb(imdb,batch,isFliped);     
+        return
+   end
    atten_LR = opts.polarOpts.uncOpts.atten_LR;
    isNormalize = opts.polarOpts.uncOpts.isNormalize;
    isMaximize = opts.polarOpts.uncOpts.isMaximize;
+   
+   
+   
+   [net.layers{1}.centers,imdb,batch] = getCentersImdb(imdb,batch,isFliped);
    if atten_LR == 0
        
        return;
    end
-   
-   
-   [net.layers{1}.centers,imdb,batch] = getCentersImdb(imdb,batch,isFliped);
    unc_net = net;
    CentHist = net.layers{1}.centers;
    [unc_net.layers{end},forwardHandle,backwardHandle] = createUncertainLayer();

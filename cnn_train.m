@@ -106,7 +106,7 @@ start = opts.continue * findLastCheckpoint(opts.expDir) ;
 if start >= 1
   fprintf('%s: resuming by loading epoch %d\n', mfilename, start) ;
   [net, stats] = loadState(modelPath(start)) ;
-  imdb = saveLoadCenter(opts.expDir,imdb,start,false)
+  imdb = saveLoadCenter(opts.expDir,imdb,start,false);
 end
 
 for epoch=start+1:opts.numEpochs
@@ -310,7 +310,7 @@ for t=1:opts.batchSize:numel(subset)
       evalMode = 'test' ;
     end
     net.layers{end}.class = labels ;
-    if opts.usePolar && opts.polarOpts.useUncertainty
+    if opts.usePolar 
     res_c = res;
     [net,state.imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im,isFliped,state.imdb,batch,opts,s,res_c);
     end
