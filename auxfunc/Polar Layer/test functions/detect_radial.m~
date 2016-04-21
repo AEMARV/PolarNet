@@ -1,10 +1,10 @@
-function [a,c,mov] = detect_radial(imagePure,procImage,isTrain,labels,opts)
+function [a,c,mov] = detect_radial(imagePure,procImage,netPath)
 % function [a,c,mov] = detect_radial(imdbPath,imagePath,MovieOutPath,netPath,MovieName,numEpochs,videoRes)
 
 images = imdb;
 debug_polar_function = 0;
-samplingSize = opts.videoRes;
-BatchSize = opts.BatchSize;
+samplingSize = videoRes;
+BatchSize = 1024;
 debug = 0;
 videoFrameRate = 4;
 

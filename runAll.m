@@ -14,7 +14,7 @@ switch typePolar
         typePolar = 1;
 end
 usePolar = true;
-useUncertainty = true;
+useUncertainty = false;
 useGmm = false;
 upSampleRate =double(2);
 DownSampleRate = double(2);
