@@ -55,7 +55,7 @@ function opts = updateOptsPolar(varargin)
 %    produce with updateOptsUnc
 
 
-    
+    opts.continue = false;
     opts.type = 0;
     opts.usePolar = true;
     opts.useUncertainty = false;
@@ -66,8 +66,7 @@ function opts = updateOptsPolar(varargin)
     opts.interval = 6;
     opts.kernel = single(fspecial('gaussian',ceil(double(2*opts.filterSigma *3)),double(opts.filterSigma)));
     opts.extrapval = single(0);
-    opts.uncOpts = updateOptsUnc;
-    opts.continue = false;
+    opts.uncOpts = [];
     opts = vl_argparse(opts,varargin);
     opts.kernel = single(fspecial('gaussian',ceil(double(2*opts.filterSigma *3)),double(opts.filterSigma)));
     opts.extrapval = single(opts.extrapval);

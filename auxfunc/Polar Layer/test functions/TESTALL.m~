@@ -26,7 +26,7 @@ procImage = imdb.images.data(:,:,:,indices);
 labels = imdb.images.labels(indices);
 fn = getFetchImageFunc('cifar');
 pureImage = fn(indices,opts.imagePath);
-detect_radial(pureImage,procImage,isTrain,labels,opts);
+detect_radial(pureImage,procImage,isTrain,opts);
 end
 
 function fn = getFetchImageFunc(dataBaseName)
