@@ -157,7 +157,7 @@ for epoch=start+1:opts.numEpochs
     saveState(modelPath(epoch), net, stats) ;
   end
   % saves the state
-  imdb  = saveLoadCenter(opts.expDir,imdb,epoch,true);
+  state.imdb  = saveLoadCenter(opts.expDir,state.imdb,epoch,true);
   if opts.plotStatistics
     switchFigure(1) ; clf ;
     plots = setdiff(...
