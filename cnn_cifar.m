@@ -44,7 +44,7 @@ else
   mkdir(opts.expDir) ;
   save(opts.imdbPath, '-struct', 'imdb') ;
 end
-
+imdb = imdbRotation(imdb,3,100);
 net.meta.classes.name = imdb.meta.classes(:)' ;
 
 % -------------------------------------------------------------------------
