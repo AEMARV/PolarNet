@@ -80,10 +80,13 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    dzdx0  = dzdx0 * atten_LR;
    dzdx1 = dzdx1 * atten_LR;
    % fits the new center into the history
+   newCentHist = CentHist;
    newCentHist(1,1,1,:) = squeeze(CentHist(1,1,1,:)) - dzdx0;
    newCentHist(1,2,1,:) = squeeze(CentHist(1,2,1,:)) - dzdx1;
    if isFliped
        CentHist(1,2,1,:) = 1- newCentHist(1,2,1,:);
+   else
+       CentHist(1,:,1,:) = newCentHist(1,:,1,:);
    end
    net.layers{1}.centers = newCentHist;
    imdb.images.centerHist(:,:,:,batch) = gather(CentHist);

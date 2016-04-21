@@ -129,16 +129,16 @@ for epoch=start+1:opts.numEpochs
   end
 
   if numel(opts.gpus) <= 1
-    [net,stats.train(epoch),prof] = process_epoch(net, state, opts, 'train') ;
-    [~,stats.val(epoch)] = process_epoch(net, state, opts, 'val') ;
+    [net,stats.train(epoch),prof,state] = process_epoch(net, state, opts, 'train') ;
+    [~,stats.val(epoch),~,state] = process_epoch(net, state, opts, 'val') ;
     if opts.profile
       profview(0,prof) ;
       keyboard ;
     end
   else
     spmd(numGpus)
-      [net_, stats_.train, prof_] = process_epoch(net, state, opts, 'train') ;
-      [~, stats_.val] = process_epoch(net_, state, opts, 'val') ;
+      [net_, stats_.train, prof_,state] = process_epoch(net, state, opts, 'train') ;
+      [~, stats_.val,~,state] = process_epoch(net_, state, opts, 'val') ;
       if labindex == 1, savedNet_ = net_ ; end
     end
     net = savedNet_{1} ;
@@ -226,7 +226,7 @@ function err = error_none(opts, labels, res)
 err = zeros(0,1) ;
 
 % -------------------------------------------------------------------------
-function  [net_cpu,stats,prof] = process_epoch(net, state, opts, mode)
+function  [net_cpu,stats,prof,state] = process_epoch(net, state, opts, mode)
 % -------------------------------------------------------------------------
 
 % initialize empty momentum
