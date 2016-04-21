@@ -12,7 +12,7 @@ opts.modelType = 'lenet' ;
 opts.expDir = fullfile(vl_rootnn, 'data', ...
   sprintf('cifar-%s', opts.modelType)) ;
 [opts, varargin] = vl_argparse(opts, varargin) ;
-
+opts.continue = false;
 opts.dataDir = fullfile(vl_rootnn, 'data','cifar') ;
 opts.imdbPath = fullfile(opts.expDir, 'imdb.mat');
 opts.whitenData = true ;
@@ -62,7 +62,8 @@ end
   opts.train, ...
   'val', find(imdb.images.set == 3)...
   ,'usePolar',opts.usePolar...
-  ,'polarOpts',opts.polarOpts) ;
+  ,'polarOpts',opts.polarOpts...
+  ,'continue',opts.continue) ;
 
 % -------------------------------------------------------------------------
 function fn = getBatch(opts)
