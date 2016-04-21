@@ -70,8 +70,12 @@ function opts = updateOptsPolar(varargin)
     opts.extrapval = single(0);
     opts.uncOpts = updateOptsUnc;
 <<<<<<< master
+<<<<<<< master
     opts.uncOpts = [];
 =======
+=======
+    opts.uncOpts = [];
+>>>>>>> ValidationSetRotationAdded2
     opts.continue = false;
 >>>>>>> ValidationSetRotatitionAdded
     opts = vl_argparse(opts,varargin);
