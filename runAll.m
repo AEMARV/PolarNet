@@ -1,5 +1,12 @@
 function out = runALL()
 %% 
+% creating videos
+skip = true;
+runCreateVideo();
+if skip
+    return
+end
+
 % polar options
 typePolar = 'log';
 switch typePolar
@@ -48,4 +55,22 @@ polarOpts = updateOptsPolar(...
 cnn_cifar('train',struct('gpus',1),'expDir','./results'...
     ,'usePolar',polarOpts.usePolar...
     ,'polarOpts',polarOpts);
+end
+function runCreateVideo(varargin)
+opts.dataBaseName = 'cifar';
+opts.imdbPath = './results';
+opts.netPath = imdbPath;
+opts.imagePath = fullfile(vl_rootnn(),'data','cifar','cifar-10-batches-mat');
+opts.movieOutPathBase = fullfile(pwd,'evolveVids');
+opts.videoRes = 32;
+opts.numberOfVideos = 10;
+opts.BatchSize =1024;
+createVideos('dataBaseName',opts.dataBaseName...
+,'imdbPath',opts.imdbPath...
+,'netPath',opts.netPath...
+,'imagePath',opts.imagePath...
+,'movieOutPathBase',opts.movieOutPathBase...
+,'videoRes',opts.videoRes...
+,'numberOfVideos',opts.numberOfVideos...
+,'BatchSize',opts.BatchSize);
 end

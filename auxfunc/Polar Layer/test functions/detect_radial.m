@@ -1,10 +1,10 @@
-function [mov] = detect_radial(imagePure,procImage,indices,isTrain,labels,opts)
+function [mov,concatMov] = detect_radial(imagePure,procImage,indices,labels,opts)
 % function [a,c,mov] = detect_radial(imdbPath,imagePath,MovieOutPath,netPath,MovieName,numEpochs,videoRes)
-
+CHANNEL_NUM = size(procImage,3);
 samplingSize = opts.videoRes;
 BatchSize = opts.BatchSize;
-
-
+numEpochs = opts.numEpoch;
+netPath = opts.netPath;
 ImageCount = numel(indices);
 %%% TODO :::: imresize does not work with multiple images
 assert(samplingSize == size(imagePure,1),'resizing is not implemented\n...please set the video resolution to dataset original size')
@@ -14,7 +14,7 @@ r0 = 0.2;
 c0 = 0.1;
 a = zeros(samplingSize,samplingSize);
 c = zeros(samplingSize,samplingSize);
-z= zeros(samplingSize,2*samplingSize,3);
+z= zeros(samplingSize,2*samplingSize,CHANNEL_NUM);
 % create movie
 %v = VideoWriter([opts.movieOutPathBase,MovieBaseName,'.avi'],'Uncompressed AVI');
 %v.FrameRate = videoFrameRate;
@@ -26,14 +26,15 @@ c0 = c0 / samplingSize;
 [c0,r0] = meshgrid(c0,r0);
 centersC = gpuArray(cat(2,r0(:),c0(:)));
 mov = zeros([size(procImage),numEpochs]);
+concatMov = zeros(samplingSize,2*samplingSize,CHANNEL_NUM,ImageCount,numEpochs);
 %procImage = repmat(procImage,1,1,1,BatchSize);
-for i = 1 :numEpochs
-    load([netPath,'net-epoch-',int2str(i),'.mat']);
-    load([netPath,'cents',int2str(i),'.mat']);
+for ep = 1 :numEpochs
+    load(fullfile(netPath,['net-epoch-',int2str(ep),'.mat']));
+    load(fullfile(netPath,['cents',int2str(ep),'.mat']));
     net_gpu = vl_simplenn_move(net,'gpu');
     net_gpu.layers{end}.class = ones(1,BatchSize);
     for j = 1: ImageCount
-        imageIndex = indices(j)
+        imageIndex = indices(j);
         chosenCenter = centerHist(1,:,1,imageIndex);
         chosenCenter = chosenCenter * samplingSize;
         cur_image = procImage(:,:,:,j);
@@ -42,16 +43,16 @@ for i = 1 :numEpochs
             %im1P = pol_transform(im1,centersC(k:k+BatchSize-1,:));
             net_gpu.layers{1}.centers = centersC(k:k+BatchSize-1,:);
             res = vl_simplenn(net_gpu,cur_image);
-            [m,i] = max(res(end-1).x,[],3);
+            [m,MAXIND] = max(res(end-1).x,[],3);
             ctemp = 1-AM_entropy(sigmoid(gather(res(end-1).x),'sigmoid'),1);
             [rtemp,coltemp] = ind2sub(size(c),k:k+BatchSize-1);
             c(k:k+BatchSize-1) = ctemp(:);
-            a(k:k+BatchSize-1) = gather(i(:));
+            a(k:k+BatchSize-1) = gather(MAXIND(:));
         end
         c = c./(max(c(:)));
         %labels_image = z;
         
-        z(1:samplingSize,samplingSize +1 :2* samplingSize,:)= imagePure;
+        z(1:samplingSize,samplingSize +1 :2* samplingSize,:)= imagePure(:,:,:,j);
         z(1:samplingSize,1:samplingSize,2) = c .* (a == labels(j));
         z(1:samplingSize,1:samplingSize,1) = c .* (a ~= labels(j));
         if floor(chosenCenter(1)) >= 1 && floor(chosenCenter(1)) <= 32 && floor(chosenCenter(2)) >= 1 && floor(chosenCenter(2)) <= 32
@@ -67,7 +68,8 @@ for i = 1 :numEpochs
         end
         z = min(z,1);
         z = max(z,0);
-        mov(:,:,:,j,i) = z(1:samplingSize,1:samplingSize,:);
+        mov(:,:,:,j,ep) = z(1:samplingSize,1:samplingSize,:);
+        concatMov(:,:,:,j,ep) = z(:,:,:);
      %   writeVideo(v,z);
         z = z.* 0;
     end
