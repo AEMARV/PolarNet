@@ -42,6 +42,7 @@ for ep = 1 :numEpochs
         for k = 1:BatchSize: numel(r0)-1
             %im1P = pol_transform(im1,centersC(k:k+BatchSize-1,:));
             net_gpu.layers{1}.centers = centersC(k:k+BatchSize-1,:);
+            net_gpu.layers{1}.randomRotate =false;
             res = vl_simplenn(net_gpu,cur_image);
             [m,MAXIND] = max(res(end-1).x,[],3);
             ctemp = 1-AM_entropy(sigmoid(gather(res(end-1).x),'sigmoid'),1);

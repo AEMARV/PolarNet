@@ -58,26 +58,21 @@ function resip1 =  pol_transform_wrapper_forward(layer,resi,resip1)
     centers = centers(1,:,1,:);
     centers = squeeze(centers)';
     end
-    resip1.x = pol_transform(resi.x,centers,layer);
     if layer.randomRotate
     shiftAmount = rand(1);
     shiftAmount = floor(shiftAmount * size(resi.x,2));
     layer.rotatePix = shiftAmount;
     end
-    resip1.x = shiftAll(resip1.x,layer.rotatePix);
+    resip1.x = pol_transform(resi.x,centers,layer);
+    resip1.x = 
 end
 function resi = pol_transform_wrapper_backward(layer,resi,resip1)
 %    opts = layer.opts;
-    
     centers = layer.centers;
     if isempty(centers)
         error('centers are empty matrix');
     end
-    dzdpol = resip1.dzdx;
-    if layer.randomRotate
-       dzdpol = shiftAll(dzdpol,-layer.rotatePix); 
-    end
-    [dzdrow,dzdcol] = calcGradCenter(dzdpol,resi.x,centers,layer);
+    [dzdrow,dzdcol] = calcGradCenter(resip1.dzdx,resi.x,centers,layer);
     resi.dzdrow = dzdrow;
     resi.dzdcol = dzdcol;
 end
@@ -85,6 +80,6 @@ function shifted = shiftAll(x,shiftAmount)
 colNum = size(x,2);
 shifted = x;
 ind = 0: colNum-1; % 0 15
-indNew = mod((ind + shiftAmount),colNum) +1 ;% SA : 15+SA -> SA : 15 : 0: SA -1
+indNew = mod((ind + shiftAmount),colNum) +1 % SA : 15+SA -> SA : 15 : 0: SA -1
 shifted(:,ind+1,:,:) = x(:,indNew,:,:);
 end
