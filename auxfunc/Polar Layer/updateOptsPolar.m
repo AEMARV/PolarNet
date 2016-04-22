@@ -69,15 +69,8 @@ function opts = updateOptsPolar(varargin)
     opts.kernel = single(fspecial('gaussian',ceil(double(2*opts.filterSigma *3)),double(opts.filterSigma)));
     opts.extrapval = single(0);
     opts.uncOpts = updateOptsUnc;
-<<<<<<< master
-<<<<<<< master
     opts.uncOpts = [];
-=======
-=======
-    opts.uncOpts = [];
->>>>>>> ValidationSetRotationAdded2
     opts.continue = false;
->>>>>>> ValidationSetRotatitionAdded
     opts = vl_argparse(opts,varargin);
     opts.kernel = single(fspecial('gaussian',ceil(double(2*opts.filterSigma *3)),double(opts.filterSigma)));
     opts.extrapval = single(opts.extrapval);

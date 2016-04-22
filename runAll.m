@@ -23,20 +23,16 @@ switch typePolar
 end
 contnu = false;% continue parameter
 usePolar = true;
-useUncertainty = true;
+useUncertainty = false;
 useGmm = false;
 upSampleRate =double(2);
 DownSampleRate = double(2);
 filterSigma = single(2/3);
 interval = 0;
-extrapvalue = 0;
+extrapvalue = nan;
 uncOpts = [];
 %% uncertainty option
-<<<<<<< master
-atten_LR = 0.1;
-=======
 atten_LR = 0.05;
->>>>>>> ValidationSetRotatitionAdded
 isNormalize = false;
 isMaximize = false; % if set maximizes the certainty when moving
 if useUncertainty
@@ -56,7 +52,7 @@ polarOpts = updateOptsPolar(...
     ,'interval',interval...
     ,'extrapval',extrapvalue...
     ,'uncOpts',uncOpts...
-    ,'randomRotate',true);
+    ,'randomRotate',false);
 
 cnn_cifar('train',struct('gpus',1),'expDir','./results'...
     ,'usePolar',polarOpts.usePolar...
