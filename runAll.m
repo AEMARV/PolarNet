@@ -1,7 +1,7 @@
-function out = runALL()
+function out = runALL(varargin)
 %% 
 % creating videos
-skip = true;
+skip = false;
 
 if skip
     runCreateVideo();
@@ -9,7 +9,7 @@ if skip
 end
 
 % polar options
-typePolar = 'log';
+typePolar = 'linear';
 switch typePolar
     case 'log'
         typePolar = 0;
@@ -23,7 +23,7 @@ switch typePolar
 end
 contnu = false;% continue parameter
 usePolar = true;
-useUncertainty = false;
+useUncertainty = true;
 useGmm = false;
 upSampleRate =double(2);
 DownSampleRate = double(2);
@@ -32,9 +32,9 @@ interval = 0;
 extrapvalue = 0;
 uncOpts = [];
 %% uncertainty option
-atten_LR = 0.05;
+atten_LR = 0.1;
 isNormalize = false;
-isMaximize = true; % if set maximizes the certainty when moving
+isMaximize = false; % if set maximizes the certainty when moving
 if useUncertainty
 uncOpts = updateOptsUnc('atten_LR',atten_LR...
     ,'isNormalize',isNormalize...

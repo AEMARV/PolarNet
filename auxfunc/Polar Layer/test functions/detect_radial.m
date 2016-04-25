@@ -5,6 +5,7 @@ samplingSize = opts.videoRes;
 BatchSize = opts.BatchSize;
 numEpochs = opts.numEpoch;
 netPath = opts.netPath;
+colorMap = opts.colorMap
 ImageCount = numel(indices);
 %%% TODO :::: imresize does not work with multiple images
 assert(samplingSize == size(imagePure,1),'resizing is not implemented\n...please set the video resolution to dataset original size')
