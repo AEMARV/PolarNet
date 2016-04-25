@@ -1,7 +1,7 @@
 function out = runALL(varargin)
 %% 
 % creating videos
-skip = false;
+skip = true;
 
 if skip
     runCreateVideo();
@@ -9,7 +9,7 @@ if skip
 end
 
 % polar options
-typePolar = 'linear';
+typePolar = 'log';
 switch typePolar
     case 'log'
         typePolar = 0;

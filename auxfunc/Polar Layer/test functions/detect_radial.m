@@ -5,7 +5,6 @@ samplingSize = opts.videoRes;
 BatchSize = opts.BatchSize;
 numEpochs = opts.numEpoch;
 netPath = opts.netPath;
-colorMap = opts.colorMap
 ImageCount = numel(indices);
 %%% TODO :::: imresize does not work with multiple images
 assert(samplingSize == size(imagePure,1),'resizing is not implemented\n...please set the video resolution to dataset original size')
@@ -15,7 +14,7 @@ r0 = 0.2;
 c0 = 0.1;
 a = zeros(samplingSize,samplingSize);
 c = zeros(samplingSize,samplingSize);
-z= zeros(samplingSize,2*samplingSize,CHANNEL_NUM);
+z= zeros(samplingSize,3*samplingSize,CHANNEL_NUM);
 % create movie
 %v = VideoWriter([opts.movieOutPathBase,MovieBaseName,'.avi'],'Uncompressed AVI');
 %v.FrameRate = videoFrameRate;
@@ -27,7 +26,7 @@ c0 = c0 / samplingSize;
 [c0,r0] = meshgrid(c0,r0);
 centersC = gpuArray(cat(2,r0(:),c0(:)));
 mov = zeros([size(procImage),numEpochs]);
-concatMov = zeros(samplingSize,2*samplingSize,CHANNEL_NUM,ImageCount,numEpochs);
+concatMov = zeros(samplingSize,3*samplingSize,CHANNEL_NUM,ImageCount,numEpochs);
 %procImage = repmat(procImage,1,1,1,BatchSize);
 for ep = 1 :numEpochs
     load(fullfile(netPath,['net-epoch-',int2str(ep),'.mat']));
@@ -51,10 +50,11 @@ for ep = 1 :numEpochs
             c(k:k+BatchSize-1) = ctemp(:);
             a(k:k+BatchSize-1) = gather(MAXIND(:));
         end
+        assert(min(c(:))>=0 & max(c(:))<=1);
         c = c./(max(c(:)));
         %labels_image = z;
         
-        z(1:samplingSize,samplingSize +1 :2* samplingSize,:)= imagePure(:,:,:,j);
+        z(1:samplingSize,2*samplingSize +1 :3* samplingSize,:)= imagePure(:,:,:,j);
         z(1:samplingSize,1:samplingSize,2) = c .* (a == labels(j));
         z(1:samplingSize,1:samplingSize,1) = c .* (a ~= labels(j));
         if floor(chosenCenter(1)) >= 1 && floor(chosenCenter(1)) <= 32 && floor(chosenCenter(2)) >= 1 && floor(chosenCenter(2)) <= 32
@@ -64,16 +64,20 @@ for ep = 1 :numEpochs
             else
                 z(floor(chosenCenter(1)),floor(chosenCenter(2)),3) = 1;
                 z(floor(chosenCenter(1)),floor(chosenCenter(2)),2) = 1;
-                z(floor(chosenCenter(1)),floor(samplingSize+chosenCenter(2)),3) = 1;
-                z(floor(chosenCenter(1)),floor(samplingSize+chosenCenter(2)),2) = 1;
+                z(floor(chosenCenter(1)),floor(2*samplingSize+chosenCenter(2)),3) = 1;
+                z(floor(chosenCenter(1)),floor(2*samplingSize+chosenCenter(2)),2) = 1;
             end
         end
+        z(1:samplingSize,samplingSize+1:2*samplingSize,1) = c;
+        z(1:samplingSize,samplingSize+1:2*samplingSize,2:3) = 1;
+        z(1:samplingSize,samplingSize+1:2*samplingSize,:) = hsv2rgb(z(1:samplingSize,samplingSize+1:2*samplingSize,:));
+        assert(min(z(:))>=0 & max(z(:))<=1);
         z = min(z,1);
         z = max(z,0);
         mov(:,:,:,j,ep) = z(1:samplingSize,1:samplingSize,:);
         concatMov(:,:,:,j,ep) = z(:,:,:);
      %   writeVideo(v,z);
-        z = z.* 0;
+        z = zeros(size(z));
     end
     %figure; imshow(imresize(z,[size(im1cut,1),size(im1cut,2)]),[]);title('uncertainty');
     %labels_image = imresize(z,[size(im1cut,1),size(im1cut,2)]);
@@ -84,6 +88,7 @@ end
 %implay(mov);
 
 end
+
 function im1 = prepData(im1, dataMean, en,V,d2,n)
 im1 = im1 - dataMean;
 
