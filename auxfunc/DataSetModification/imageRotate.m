@@ -1,6 +1,12 @@
 function [ imr ] = imageRotate( im,theta,method )
-%IMAGEROTATE Summary of this function goes here
-%   Detailed explanation goes here
+%% function [ imr ] = imageRotate( im,theta,method )
+% rotates single input image 
+% -Theta is from 0 to 360
+% -method:
+%   'crop': crops the image in order to match the output image to input
+%   image and fill the resulting values with zero
+%   'mirror': crop the image in order to match the output image size and
+%   fill with the mirror of image.
     switch method
         case 'crop'
             imr = imrotate(im,theta,'crop');

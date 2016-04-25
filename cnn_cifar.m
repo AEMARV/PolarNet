@@ -21,6 +21,8 @@ opts.networkType = 'simplenn' ;
 opts.train = struct() ;
 opts.usePolar = false;
 opts.polarOpts = [];
+opts.validationRotation=true;
+opts.validationRotationMaxTheta = 360;
 opts = vl_argparse(opts, varargin) ;
 if ~isfield(opts.train, 'gpus'), opts.train.gpus = []; end;
 
@@ -44,7 +46,9 @@ else
   mkdir(opts.expDir) ;
   save(opts.imdbPath, '-struct', 'imdb') ;
 end
-imdb = imdbRotation(imdb,3,100,360);
+if opts.validationRotation
+    imdb = imdbRotation(imdb,3,100,opts.validationRotationMaxTheta);
+end
 net.meta.classes.name = imdb.meta.classes(:)' ;
 
 % -------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 function [imdbRotated] = ImdbRotation(imdb,valsetNumber,batchsize,thetaLimit)
 %% 
+%% function imdbRotated = ImdbRotation(imdb,valsetNumber,batchsize,thetaLimit)
 % valsetNumber is the set index for validation set
 % batchsize is the batch size in order to process rotation with gpu
 % Theta Limit is to set a limit for rotation. max 360 and min is 0
