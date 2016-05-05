@@ -4,7 +4,7 @@ function out = runALL(varargin)
 % dir opts
 opts.expDir = fullfile(pwd,'results');
 expDir = opts.expDir;
-opts=vl_argpares(opts,varargin)
+opts=vl_argparse(opts,varargin)
 skip = true;
 
 if skip
