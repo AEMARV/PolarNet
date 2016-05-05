@@ -1,4 +1,4 @@
-function  layer  = createPolarLayer(opts)
+    function  layer  = createPolarLayer(opts)
 %% function  layer  = createPolarLayer(opts)
 % creates a polar layer with the following fields
 % ========================================================================
