@@ -1,11 +1,15 @@
 function out = runALL(varargin)
 %% 
 % creating videos
-skip = true;
+% dir opts
+opts.expDir = fullfile(pwd,'results');
+expDir = opts.expDir;
+opts=vl_argparse(opts,varargin)
+skip = false;
 
 if skip
     runCreateVideo();
-    return
+   return;
 end
 
 % polar options
@@ -54,10 +58,13 @@ polarOpts = updateOptsPolar(...
     ,'uncOpts',uncOpts...
     ,'randomRotate',true);
 
-cnn_cifar('train',struct('gpus',1),'expDir','./results'...
+cnn_cifar('train',struct('gpus',1),'expDir',expDir...
     ,'usePolar',polarOpts.usePolar...
     ,'polarOpts',polarOpts);
-runCreateVideo();
+runCreateVideo('imdbPath',expDir...
+    ,'netPath',expDir...
+    ,'movieOutPathBase',fullfile(expDir,'Vids'));
+writeOptsxml(polarOpts,fullfile(expDir,'options.xml'));
 end
 function runCreateVideo(varargin)
 opts.dataBaseName = 'cifar';
