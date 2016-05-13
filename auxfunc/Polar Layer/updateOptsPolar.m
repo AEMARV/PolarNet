@@ -51,6 +51,8 @@ function opts = updateOptsPolar(varargin)
 %    
 %    opts.extrapval = single(0);
 %    
+%    opts.convFreq = false;
+%    
 %    opts.uncOpts = [];   %% this option is a struct, which you can
 %    produce with updateOptsUnc
 %    opts.randomRotate = false  randomly rotates the input images.
@@ -70,6 +72,7 @@ function opts = updateOptsPolar(varargin)
     opts.extrapval = single(0);
     opts.uncOpts = updateOptsUnc;
     opts.uncOpts = [];
+    opts.convFreq = false;
     opts = vl_argparse(opts,varargin);
     opts.kernel = single(fspecial('gaussian',ceil(double(2*opts.filterSigma *3)),double(opts.filterSigma)));
     opts.extrapval = single(opts.extrapval);

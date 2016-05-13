@@ -33,7 +33,7 @@ opts.randomSeed = 0 ;
 opts.memoryMapFile = fullfile(tempdir, 'matconvnet.bin') ;
 opts.profile = false ;
 
-opts.conserveMemory = true ;
+opts.conserveMemory = false ;
 opts.backPropDepth = +inf ;
 opts.sync = false ;
 opts.cudnn = true ;
@@ -270,7 +270,7 @@ stats.time = 0 ;
 adjustTime = 0 ;
 res = [] ;
 error = [] ;
-
+errorC = [];
 start = tic ;
 for t=1:opts.batchSize:numel(subset)
   fprintf('%s: epoch %02d: %3d/%3d:', mode, state.epoch, ...
@@ -314,6 +314,7 @@ for t=1:opts.batchSize:numel(subset)
     res_c = res;
     [net,state.imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im,isFliped,state.imdb,batch,opts,s,res_c);
     end
+    
     res = vl_simplenn(net, im, dzdy, res, ...
                       'accumulate', s ~= 1, ...
                       'mode', evalMode, ...
@@ -322,7 +323,7 @@ for t=1:opts.batchSize:numel(subset)
                       'sync', opts.sync, ...
                       'cudnn', opts.cudnn) ;
 
-    % accumulate errors
+    % accumulate error
     error = sum([error, [...
       sum(double(gather(res(end).x))) ;
       reshape(opts.errorFunction(opts, labels, res),[],1) ; ]],2) ;

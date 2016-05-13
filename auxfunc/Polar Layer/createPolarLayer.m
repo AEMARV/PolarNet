@@ -37,6 +37,7 @@ layer.typePolar = opts.type;
 layer.filterSigma = opts.filterSigma;
 layer.randomRotate = opts.randomRotate;
 layer.rotatePix = 0;
+layer.convFreq = opts.convFreq;
 if isfield(opts,'rmin')
     layer.rmin = opts.rmin;
     layer.rmax = opts.rmax;
@@ -63,8 +64,13 @@ function resip1 =  pol_transform_wrapper_forward(layer,resi,resip1)
     shiftAmount = rand(1);
     shiftAmount = floor(shiftAmount * size(resi.x,2));
     layer.rotatePix = shiftAmount;
-    end
     resip1.x = shiftAll(resip1.x,layer.rotatePix);
+    end
+    
+    
+    if layer.convFreq
+        resip1.x = FreqConv(resip1.x);
+    end
 end
 function resi = pol_transform_wrapper_backward(layer,resi,resip1)
 %    opts = layer.opts;
@@ -74,9 +80,13 @@ function resi = pol_transform_wrapper_backward(layer,resi,resip1)
         error('centers are empty matrix');
     end
     dzdpol = resip1.dzdx;
+    if layer.convFreq
+        dzdpol = iFreqConv(dzdpol);
+    end
     if layer.randomRotate
        dzdpol = shiftAll(dzdpol,-layer.rotatePix); 
     end
+    
     [dzdrow,dzdcol] = calcGradCenter(dzdpol,resi.x,centers,layer);
     resi.dzdrow = dzdrow;
     resi.dzdcol = dzdcol;
@@ -87,4 +97,53 @@ shifted = x;
 ind = 0: colNum-1; % 0 15
 indNew = mod((ind + shiftAmount),colNum) +1 ;% SA : 15+SA -> SA : 15 : 0: SA -1
 shifted(:,ind+1,:,:) = x(:,indNew,:,:);
+end
+function FreqIm = FreqConv(ims,isRadius)
+% converts the ims images with W*H*C*B dimensions into frequency domain in
+% each row (Radius); 
+if nargin <2
+    isRadius = true;
+end
+if isRadius
+ims = permute( ims,[2,1,3,4]);
+% NOW ROWS ARE DIFFERENT THETAS
+end
+SIZE = size(ims);
+RowNum = SIZE(1);
+ColNum = SIZE(2);
+ChanNum = SIZE(3);
+BatchNum = SIZE(4);
+
+ims = reshape(ims,[RowNum , ColNum * ChanNum * BatchNum]);
+FreqIm = dct(ims);
+FreqIm = reshape(FreqIm,[RowNum,ColNum,ChanNum,BatchNum]);
+
+if isRadius
+   FreqIm = permute( FreqIm,[2,1,3,4]);
+end
+
+
+
+end
+function Im = iFreqConv(FreqIm,isRadius)
+if nargin <2
+    isRadius = true;
+end
+if isRadius
+FreqIm = permute( FreqIm,[2,1,3,4]);
+% NOW ROWS ARE DIFFERENT THETAS
+end
+SIZE = size(FreqIm);
+RowNum = SIZE(1);
+ColNum = SIZE(2);
+ChanNum = SIZE(3);
+BatchNum = SIZE(4);
+
+FreqIm = reshape(FreqIm,[RowNum , ColNum * ChanNum * BatchNum]);
+Im = idct(FreqIm);
+Im = reshape(Im,[RowNum,ColNum,ChanNum,BatchNum]);
+
+if isRadius
+   Im = permute( Im,[2,1,3,4]);
+end
 end

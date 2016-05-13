@@ -73,7 +73,7 @@ function [gr,gc] = imGradient(cartImage,opts)
 % 
 % gr : gradients along the rows
 upSampleRate = opts.upSampleRate;
-    useSobel = false;
+    useSobel = true;
     if useSobel
         Sobrow = gpuArray(single([-1,-2,-1;0,0,0;1,2,1]));
         Sobcol = gpuArray(single([-1,0,1;-2,0,2;-1,0,1]));

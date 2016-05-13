@@ -144,8 +144,7 @@ SIZEUP = gpuArray(size(thetai,1));
 
  % replace out bounds
  if isnan(extrapval)
-    
- upSampledPolar(outBound) = 255*(rand(1,numel(outBound))-0.5);
+    upSampledPolar(outBound) = 255*(rand(1,numel(outBound))-0.5);
  
  
  else

@@ -4,8 +4,8 @@ function out = runALL(varargin)
 % dir opts
 opts.expDir = fullfile(pwd,'results');
 expDir = opts.expDir;
-opts=vl_argpares(opts,varargin)
-skip = true;
+opts=vl_argparse(opts,varargin)
+skip = false;
 
 if skip
     runCreateVideo();
@@ -27,11 +27,12 @@ switch typePolar
 end
 contnu = false;% continue parameter
 usePolar = true;
-useUncertainty = true;
+useUncertainty = false;
 useGmm = false;
 upSampleRate =double(2);
 DownSampleRate = double(2);
 filterSigma = single(2/3);
+convFreq = true;
 interval = 0;
 extrapvalue = 0;
 uncOpts = [];
@@ -56,7 +57,8 @@ polarOpts = updateOptsPolar(...
     ,'interval',interval...
     ,'extrapval',extrapvalue...
     ,'uncOpts',uncOpts...
-    ,'randomRotate',true);
+    ,'convFreq',convFreq...
+    ,'randomRotate',false);
 
 cnn_cifar('train',struct('gpus',1),'expDir',expDir...
     ,'usePolar',polarOpts.usePolar...
