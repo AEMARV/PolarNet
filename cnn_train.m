@@ -33,7 +33,7 @@ opts.randomSeed = 0 ;
 opts.memoryMapFile = fullfile(tempdir, 'matconvnet.bin') ;
 opts.profile = false ;
 
-opts.conserveMemory = true ;
+opts.conserveMemory = false ;
 opts.backPropDepth = +inf ;
 opts.sync = false ;
 opts.cudnn = true ;
