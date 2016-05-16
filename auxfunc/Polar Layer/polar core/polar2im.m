@@ -14,7 +14,7 @@ function Zinterp = polar2im(M,opts)
  
  end
  %M = im2single(M);
- 
+ plotOn = 1;
  
  
     SizeRow = size(M,1);

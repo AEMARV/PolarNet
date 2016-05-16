@@ -32,6 +32,7 @@ useGmm = false;
 upSampleRate =double(2);
 DownSampleRate = double(2);
 filterSigma = single(2/3);
+convFreq = false;
 interval = 0;
 extrapvalue = 0;
 uncOpts = [];
