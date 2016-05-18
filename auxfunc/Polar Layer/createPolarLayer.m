@@ -28,7 +28,6 @@
 % one should update centers which is a 2*2*1*N matrix for every batch
 
 %layer.opts = opts;
-
 layer.kernel = opts.kernel;
 layer.extrapval = opts.extrapval;
 layer.upSampleRate = opts.upSampleRate;
@@ -38,6 +37,8 @@ layer.filterSigma = opts.filterSigma;
 layer.randomRotate = opts.randomRotate;
 layer.rotatePix = 0;
 layer.convFreq = opts.convFreq;
+layer.imageMoment.enable=opts.imageMoment.enable;
+layer.imageMoment.degree = opts.imageMoment.degree;
 if isfield(opts,'rmin')
     layer.rmin = opts.rmin;
     layer.rmax = opts.rmax;
@@ -67,10 +68,13 @@ function resip1 =  pol_transform_wrapper_forward(layer,resi,resip1)
     resip1.x = shiftAll(resip1.x,layer.rotatePix);
     end
     
-    
+    if layer.imageMoment.enable
+        resip1.x = imageMoment(resip1.x,layer.imageMoment.degree);
+    end
     if layer.convFreq
         resip1.x = FreqConv(resip1.x);
     end
+    
 end
 function resi = pol_transform_wrapper_backward(layer,resi,resip1)
 %    opts = layer.opts;
@@ -80,8 +84,12 @@ function resi = pol_transform_wrapper_backward(layer,resi,resip1)
         error('centers are empty matrix');
     end
     dzdpol = resip1.dzdx;
+    
     if layer.convFreq
         dzdpol = iFreqConv(dzdpol);
+    end
+    if layer.imageMoment.enable
+        dzdpol = moment2Image(dzdpol,layer.imageMoment.degree);
     end
     if layer.randomRotate
        dzdpol = shiftAll(dzdpol,-layer.rotatePix); 
@@ -97,6 +105,32 @@ shifted = x;
 ind = 0: colNum-1; % 0 15
 indNew = mod((ind + shiftAmount),colNum) +1 ;% SA : 15+SA -> SA : 15 : 0: SA -1
 shifted(:,ind+1,:,:) = x(:,indNew,:,:);
+end
+function momentImage = imageMoment(ims,degree)
+    if nargin<2
+        degree = -1;
+    end
+    ims_size = size(ims);
+    rows = ims_size(1);
+    cols = ims_size(2);
+    channels = ims_size(3);
+    batch = ims_size(4);
+    ims = reshape(ims,[rows,cols,channels*batch]);
+    momentImage = im2moment(ims,degree);
+    momentImage = reshape(momentImage,[rows,cols,channels,batch]);
+end
+function ims = moment2Image(mims, degree)
+    if nargin<2
+        degree = -1;
+    end
+    mims_size = size(mims);
+    rows = mims_size(1);
+    cols = mims_size(2);
+    channels = mims_size(3);
+    batch = mims_size(4);
+    mims = reshape(mims,[rows,cols,channels*batch]);
+    ims = moment2im(mims, degree);
+    ims = reshape(ims,[rows,cols,channels,batch]);
 end
 function FreqIm = FreqConv(ims,isRadius)
 % converts the ims images with W*H*C*B dimensions into frequency domain in

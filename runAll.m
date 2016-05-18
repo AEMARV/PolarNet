@@ -25,6 +25,10 @@ switch typePolar
         warning('setting the polar type to default: linear \n')
         typePolar = 1;
 end
+%--------- Moments
+momentOpts.enable=true;
+momentOpts.degree=-10;
+%-----------------
 contnu = false;% continue parameter
 usePolar = true;
 useUncertainty = false;
@@ -32,7 +36,7 @@ useGmm = false;
 upSampleRate =double(2);
 DownSampleRate = double(2);
 filterSigma = single(2/3);
-convFreq = true;
+convFreq = false;
 interval = 0;
 extrapvalue = 0;
 uncOpts = [];
@@ -58,7 +62,8 @@ polarOpts = updateOptsPolar(...
     ,'extrapval',extrapvalue...
     ,'uncOpts',uncOpts...
     ,'convFreq',convFreq...
-    ,'randomRotate',false);
+    ,'randomRotate',false...
+    ,'imageMoment',momentOpts);
 
 cnn_cifar('train',struct('gpus',1),'expDir',expDir...
     ,'usePolar',polarOpts.usePolar...
