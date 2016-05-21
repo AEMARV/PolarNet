@@ -1,5 +1,5 @@
 function Resout = derShiftRes(res)
-% function [drow,dcol] = derShiftRes(res,net)
+% function resOut = derShiftRes(res)
 % fix res calculates the derivative of the loss function with respect to
 % the shifts in each layer of the results
     Resout = res;

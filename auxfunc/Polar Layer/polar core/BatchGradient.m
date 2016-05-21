@@ -14,7 +14,7 @@ function [gr,gc] = BatchGradient(cartImage,padRowType,padColType)
     padColType = 0;
     padRowType = 0;
     end
-    useSobel = true;
+    useSobel = false;
     if useSobel
         Sobrow = gpuArray(single([-1,-2,-1;0,0,0;1,2,1]));
         Sobcol = gpuArray(single([-1,0,1;-2,0,2;-1,0,1]));
@@ -34,17 +34,21 @@ function [gr,gc] = BatchGradient(cartImage,padRowType,padColType)
         gc = reshape(grgc(:,:,2,:),RowS,ColS,ChS,BatchS);
         % gr gc must be M*N*C*B   MUSTCHECK
     else
-        Sobrow = gpuArray(single([-1;1]));
-        Sobcol = gpuArray(single([-1,1]));
+        Sobrow = gpuArray(single([-1,0;1,0]));
+        Sobcol = gpuArray(single([-1,1;0,0]));
+        F = cat(4,Sobrow,Sobcol);
         RowS = size(cartImage,1);
         ColS = size(cartImage,2);
         BatchS = size(cartImage,4);
         ChS = size(cartImage,3);
         %F = cat(4,Sobrow,Sobcol);
         X = reshape(cartImage,RowS,ColS,1,ChS*BatchS);
-        gr = vl_nnconv(X,Sobrow,[],'Pad',[0,1,0,0],'CuDNN');
+        X = padarray(X,[0,1],padColType,'post');
+        X = padarray(X,[1,0],padRowType,'post');
+        Gradi = vl_nnconv(X,F,[],'CuDNN');
+        gr = Gradi(:,:,1,:);
         gr = reshape(gr,RowS,ColS,ChS,BatchS);
-        gc = vl_nnconv(X,Sobcol,[],'Pad',[0,0,0,1],'CuDNN');
+        gc = Gradi(:,:,2,:);
         gc = reshape(gc,RowS,ColS,ChS,BatchS);
     end
     

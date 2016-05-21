@@ -64,12 +64,12 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    res_c = vl_simplenn(unc_net, im, dzdyunc, res_c, ...
        'accumulate', s ~= 1, ...
        'mode', evalMode, ...
-       'conserveMemory', opts.conserveMemory, ...
+       'conserveMemory', false, ...
        'backPropDepth', opts.backPropDepth, ...
        'sync', opts.sync, ...
        'cudnn', opts.cudnn) ;
-   
-   
+   res_c = derShiftRes(res_c);
+   [rowShift,colShift] = calc_abs_shift(res_c,2,14);
    % extracts dzdrow-col 
    dzdx0 = res_c(1).dzdrow;
    dzdx1 = res_c(1).dzdcol;
@@ -88,10 +88,14 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    newCentHist = CentHist;
    newCentHist(1,1,1,:) = squeeze(CentHist(1,1,1,:)) - dzdx0;
    newCentHist(1,2,1,:) = squeeze(CentHist(1,2,1,:)) - dzdx1;
+   newCentHist(2,1,1,:) = squeeze(CentHist(2,1,1,:)) - rowShift;
+   newCentHist(2,2,1,:) = squeeze(CentHist(2,2,1,:)) - colShift;
    if isFliped
        CentHist(1,2,1,:) = 1- newCentHist(1,2,1,:);
+       CentHist(2,2,1,:) = -newCentHist(2,2,1,:);
    else
        CentHist(1,:,1,:) = newCentHist(1,:,1,:);
+       CentHist(2,2,1,:) = -newCentHist(2,2,1,:);
    end
    net.layers{1}.centers = newCentHist;
    imdb.images.centerHist(:,:,:,batch) = gather(CentHist);

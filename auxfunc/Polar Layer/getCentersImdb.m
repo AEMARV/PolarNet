@@ -15,6 +15,7 @@ function [centers, imdb,batch ] = getCentersImdb( imdb,batch,flip )
     centers = gpuArray(imdb.images.centerHist(:,:,:,batch));
     if flip
     centers(1,2,:,:) = 1- centers(1,2,:,:);
+    centers(2,2,:,:) = - centers(2,2,:,:);
     end
 
 end

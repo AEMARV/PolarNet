@@ -105,8 +105,8 @@ SIZEUP = gpuArray(size(thetai,1));
  % coordinate, measures in space P0 (image original space)
  % rhoi is 1 : log(rmax+1) thats why rhoi -1
  
- PureRow = (rhoi).*sin(thetai);
- PureCol = (rhoi).*cos(thetai);
+ PureRow = (rhoi).*cos(thetai);
+ PureCol = (rhoi).*sin(thetai);
  PureRow = repmat(PureRow,1,1,CHANNELNUM,BATCHSIZE);
  PureCol = repmat(PureCol,1,1,CHANNELNUM,BATCHSIZE);
  Row0 = reshape(Row0,1,1,1,BATCHSIZE);
