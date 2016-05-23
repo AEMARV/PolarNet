@@ -23,6 +23,14 @@ function [output_args_dzdx,DataParamDer]  = pol_transform( input_args,DataParam,
 %                           dzdtheta0
 %                           ]
 doder = nargout >1;
+if isempty(DataParam)
+DataParam.rmin = 0;
+DataParam.rmax =1;
+DataParam.col0 = 0;
+DataParam.row0 = 0;
+DataParam.theta0 = 0;
+
+end
 if ~doder
     rmin = DataParam.rmin; % 0 : inf
     rmax = DataParam.rmax; % 0 : inf
@@ -42,11 +50,11 @@ else
     SIZE = size(input_args,2);
     Grid = createGrid(rmin,rmax,theta0,row0,col0,SIZE);
     [output_args_dzdx,dzdGrid] = vl_nnbilinearsampler(input_args,Grid,dzdout);
-    [~,DataParamDer.dzdrmin...
-        ,DataParamDer.dzdrmax...
-        ,DataParamDer.dzdtheta0...
-        ,DataParamDer.dzdrow0...
-        ,DataParamDer.dzdcol0] = createGrid(rmin,rmax,theta0,row0,col0,SIZE,dzdGrid);
+    [~,DataParamDer.rmin...
+        ,DataParamDer.rmax...
+        ,DataParamDer.theta0...
+        ,DataParamDer.row0...
+        ,DataParamDer.col0] = createGrid(rmin,rmax,theta0,row0,col0,SIZE,dzdGrid);
 end
 end
 

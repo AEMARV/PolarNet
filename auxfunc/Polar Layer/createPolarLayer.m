@@ -44,47 +44,29 @@ end
 layer.type  = 'custom';
 layer.forward = @pol_transform_wrapper_forward;
 layer.backward = @pol_transform_wrapper_backward;
-layer.centers = [];
+layer.DataParam = [];
 
 end
 function resip1 =  pol_transform_wrapper_forward(layer,resi,resip1)
 
     
-    centers = layer.centers;
+    dataParam = resi.DataParam;
     if isempty(centers)
         error('centers are empty matrix');
     end
-    if ndims(centers) == 4
-    layer.rowColShift =squeeze(centers(2,:,1,:));
-    centers = centers(1,:,1,:);
-    centers = squeeze(centers)';
-    end
-    resip1.x = pol_transform(resi.x,centers,layer);
-%     if layer.randomRotate
-%     shiftAmount = rand(1);
-%     shiftAmount = floor(shiftAmount * size(resi.x,2));
-%     layer.rotatePix = shiftAmount;
-%     end
-%     layer.rowColShift = squeeze(centers(2,:,1,:));
-    % rowColShift is 2*100
-    resip1.x = shiftAll(resip1.x,layer.rowColShift,0,'circular');
+    
+    resip1.x = pol_transform(resi.x,dataParam,layer);
+
 end
 function resi = pol_transform_wrapper_backward(layer,resi,resip1)
 %    opts = layer.opts;
     
-    centers = layer.centers;
-    rowColShift = squeeze(centers(2,:,1,:));
+    dataParam = layer.DataParam;
     if isempty(centers)
         error('centers are empty matrix');
     end
     dzdpol = resip1.dzdx;
-    dzdpol = shiftAll(dzdpol,-rowColShift,0,'circular');
-%     if layer.randomRotate
-%        dzdpol = shiftAll(dzdpol,-layer.rotatePix); 
-%     end
-    [dzdrow,dzdcol] = calcGradCenter(dzdpol,resi.x,centers,layer);
-    resi.dzdrow = dzdrow;
-    resi.dzdcol = dzdcol;
+    [resi.dzdx,resi.dzdDataParam] = pol_transform(resi.x,dataParam,dzdpol);
 end
 function shifted = shiftAll(x,shiftAmount,rowType,colType)
 % shifts x where x is M*N*C*B according to shiftAmount where

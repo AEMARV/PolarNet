@@ -37,8 +37,9 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    % 
    % opts  : same struct in the training function
    % s is the batch number
+   cartResIndex = 1;
    if ~opts.polarOpts.useUncertainty
-        [net.layers{1}.centers,imdb,batch] = getCentersImdb(imdb,batch,isFliped);     
+        [res_c(cartResIndex).DataParam,imdb,~] = getDataParamImdb(imdb,batch,isFliped);     
         return
    end
    atten_LR = opts.polarOpts.uncOpts.atten_LR;
@@ -47,14 +48,13 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    
    
    
-   [net.layers{1}.centers,imdb,batch] = getCentersImdb(imdb,batch,isFliped);
+   [res_c(cartResIndex).DataParam,imdb,~] = getDataParamImdb(imdb,batch,isFliped);
    if atten_LR == 0
        
        return;
    end
    unc_net = net;
-   CentHist = net.layers{1}.centers;
-   [unc_net.layers{end},forwardHandle,backwardHandle] = createUncertainLayer();
+   [unc_net.layers{end},~,~] = createUncertainLayer();
    unc_net =vl_simplenn_tidy(unc_net);
    if isMaximize
        dzdyunc = gpuArray(1);
@@ -68,39 +68,24 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
        'backPropDepth', opts.backPropDepth, ...
        'sync', opts.sync, ...
        'cudnn', opts.cudnn) ;
-   res_c = derShiftRes(res_c);
-   [rowShift,colShift] = calc_abs_shift(res_c,2,14);
-   % extracts dzdrow-col 
-   dzdx0 = res_c(1).dzdrow;
-   dzdx1 = res_c(1).dzdcol;
-   if isNormalize
-   % finds dzdrow-col with more than 1 pixel shift
-   GTO = find(  (dzdx0 .^ 2 + dzdx1 .^ 2)  > 1/32);
-   % normalize the dzdrow-col
-   R0 = sqrt(dzdx0.^2 + dzdx1.^2);
-   dzdx0(GTO) = dzdx0(GTO)./R0(GTO);
-   dzdx1(GTO) = dzdx1(GTO)./R0(GTO);
-   end
-   % step
-   dzdx0  = dzdx0 * atten_LR;
-   dzdx1 = dzdx1 * atten_LR;
-   % fits the new center into the history
-   newCentHist = CentHist;
-   newCentHist(1,1,1,:) = squeeze(CentHist(1,1,1,:)) - dzdx0;
-   newCentHist(1,2,1,:) = squeeze(CentHist(1,2,1,:)) - dzdx1;
-   newCentHist(2,1,1,:) = squeeze(CentHist(2,1,1,:)) - rowShift;
-   newCentHist(2,2,1,:) = squeeze(CentHist(2,2,1,:)) - colShift;
-   if isFliped
-       CentHist(1,2,1,:) = 1- newCentHist(1,2,1,:);
-       CentHist(2,2,1,:) = -newCentHist(2,2,1,:);
-   else
-       CentHist(1,:,1,:) = newCentHist(1,:,1,:);
-       CentHist(2,2,1,:) = -newCentHist(2,2,1,:);
-   end
-   net.layers{1}.centers = newCentHist;
-   imdb.images.centerHist(:,:,:,batch) = gather(CentHist);
-   %[im,orIm, labels,CentHist,newCent,polHist,imdb] = getBatch(imdb, batch,net,opts.usePolar,opts.useGmm) ;
-   
+   dzdDataParam = res_c(cartResIndex).dzdDataParam;
+   DataParamUpd = stepStruct(res_c(cartResIndex).DataParam,dzdDataParam);
+  imdb = setDataParamImdb(imdb,DataParamUpd,batch,isFliped);
+  res_c(cartResIndex).DataParam = DataParamUpd;
         
+end
+function stout =  stepStruct(st1,st2,LR)
+Fnames = fieldNames(st1);
+cell_st1 = struct2cell(st1);
+cell_st2 = struct2cell(st2);
+cell_st3 = cellfun(@minus,cell_st1,cell_st2,'UniformOutput',false);
+stout = cell2struct(cell_st3,Fnames,1);
+end
+function stout = multStruct(st,multip)
+Fnames = fieldNames(st1);
+cell_st1 = struct2cell(st1);
+stMat = cell2mat(cell_st1);
+stMat = stMat.*multip;
+cell_st1 = mat2cell(stMat);
 end
     
