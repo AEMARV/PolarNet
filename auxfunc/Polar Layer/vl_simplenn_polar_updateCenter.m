@@ -38,8 +38,8 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    % opts  : same struct in the training function
    % s is the batch number
    cartResIndex = 1;
-   if ~opts.polarOpts.useUncertainty
-        [res_c(cartResIndex).DataParam,imdb,~] = getDataParamImdb(imdb,batch,isFliped);     
+   if ~opts.polarOpts.useUncertainty && ~isempty(res_c)
+        [res_c,imdb,~] = getDataParamImdb(imdb,batch,isFliped);     
         return
    end
    atten_LR = opts.polarOpts.uncOpts.atten_LR;
@@ -47,8 +47,12 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    isMaximize = opts.polarOpts.uncOpts.isMaximize;
    
    
-   
-   [res_c(cartResIndex).DataParam,imdb,~] = getDataParamImdb(imdb,batch,isFliped);
+   if ~isempty (res_c)
+   [res_c(cartResIndex).DataParam,imdb] = getDataParamImdb(imdb,batch,isFliped);
+   DataParam = res_c(cartResIndex).DataParam;
+   else
+       [DataParam,imdb] = getDataParamImdb(imdb,batch,isFliped);
+   end
    if atten_LR == 0
        
        return;
@@ -61,7 +65,7 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    else
        dzdyunc = gpuArray(-1);
    end
-   res_c = vl_simplenn(unc_net, im, dzdyunc, res_c, ...
+   res_c = vl_simplenn(unc_net, im,DataParam, dzdyunc, res_c, ...
        'accumulate', s ~= 1, ...
        'mode', evalMode, ...
        'conserveMemory', false, ...
@@ -69,17 +73,20 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
        'sync', opts.sync, ...
        'cudnn', opts.cudnn) ;
    dzdDataParam = res_c(cartResIndex).dzdDataParam;
-   DataParamUpd = stepStruct(res_c(cartResIndex).DataParam,dzdDataParam);
+   DataParamUpd = stepStruct(res_c(cartResIndex).DataParam,dzdDataParam,atten_LR);
   imdb = setDataParamImdb(imdb,DataParamUpd,batch,isFliped);
   res_c(cartResIndex).DataParam = DataParamUpd;
         
 end
 function stout =  stepStruct(st1,st2,LR)
-Fnames = fieldNames(st1);
-cell_st1 = struct2cell(st1);
-cell_st2 = struct2cell(st2);
-cell_st3 = cellfun(@minus,cell_st1,cell_st2,'UniformOutput',false);
-stout = cell2struct(cell_st3,Fnames,1);
+stout = st1;
+Learn = @(point,gradient,LR)point-(gradient.*LR);
+Fnames = fieldnames(st1);
+for i = 1:numel(Fnames)
+    i = floor(rand * (numel(Fnames)-1)) + 1;
+    stout.(Fnames{i}) = Learn(st1.(Fnames{i}),st2.(Fnames{i}),LR);
+    break;
+end
 end
 function stout = multStruct(st,multip)
 Fnames = fieldNames(st1);

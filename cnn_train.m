@@ -50,7 +50,7 @@ if isempty(opts.train), opts.train = find(imdb.images.set==1) ; end
 if isempty(opts.val), opts.val = find(imdb.images.set==2) ; end
 if isnan(opts.train), opts.train = [] ; end
 if isnan(opts.val), opts.val = [] ; end
-imdb = createCentHist(imdb,1);
+imdb = createDataParam(imdb);
 % -------------------------------------------------------------------------
 %                                                            Initialization
 % -------------------------------------------------------------------------
@@ -106,7 +106,7 @@ start = opts.continue * findLastCheckpoint(opts.expDir) ;
 if start >= 1
   fprintf('%s: resuming by loading epoch %d\n', mfilename, start) ;
   [net, stats] = loadState(modelPath(start)) ;
-  imdb = saveLoadCenter(opts.expDir,imdb,start,false);
+  imdb = saveLoadDataParam(opts.expDir,imdb,start,false);
 end
 
 for epoch=start+1:opts.numEpochs
@@ -157,7 +157,7 @@ for epoch=start+1:opts.numEpochs
     saveState(modelPath(epoch), net, stats) ;
   end
   % saves the state
-  state.imdb  = saveLoadCenter(opts.expDir,state.imdb,epoch,true);
+  state.imdb  = saveLoadDataParam(opts.expDir,state.imdb,epoch,true);
   if opts.plotStatistics
     switchFigure(1) ; clf ;
     plots = setdiff(...
@@ -310,11 +310,15 @@ for t=1:opts.batchSize:numel(subset)
       evalMode = 'test' ;
     end
     net.layers{end}.class = labels ;
-    if opts.usePolar 
+    if opts.usePolar & state.epoch > 6
     res_c = res;
     [net,state.imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im,isFliped,state.imdb,batch,opts,s,res_c);
+    DataParam = res_c(1).DataParam;
+    else
+        [DataParam,state.imdb] = getDataParamImdb(state.imdb,batch,isFliped);
     end
-    res = vl_simplenn(net, im, dzdy, res, ...
+   % res(1).DataParam = res_c(1).DataParam;
+    res = vl_simplenn(net, im,DataParam, dzdy, res, ...
                       'accumulate', s ~= 1, ...
                       'mode', evalMode, ...
                       'conserveMemory', opts.conserveMemory, ...

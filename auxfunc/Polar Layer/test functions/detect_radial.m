@@ -30,7 +30,7 @@ concatMov = zeros(samplingSize,3*samplingSize,CHANNEL_NUM,ImageCount,numEpochs);
 %procImage = repmat(procImage,1,1,1,BatchSize);
 for ep = 1 :numEpochs
     load(fullfile(netPath,['net-epoch-',int2str(ep),'.mat']));
-    load(fullfile(netPath,['cents',int2str(ep),'.mat']));
+    load(fullfile(netPath,['DataParam',int2str(ep),'.mat']));
     net_gpu = vl_simplenn_move(net,'gpu');
     net_gpu.layers{end}.class = ones(1,BatchSize);
     for j = 1: ImageCount
@@ -43,9 +43,10 @@ for ep = 1 :numEpochs
         cur_image = repmat(cur_image,1,1,1,BatchSize);
         for k = 1:BatchSize: numel(r0)-1
             %im1P = pol_transform(im1,centersC(k:k+BatchSize-1,:));
-            net_gpu.layers{1}.centers = centersC(k:k+BatchSize-1,:);
-            net_gpu.layers{1}.randomRotate =false;
-            net_gpu.layers{1}.rowColShift =repmat(chosenRot,[1,BatchSize]);
+%             net_gpu.layers{1}.centers = centersC(k:k+BatchSize-1,:);
+%             net_gpu.layers{1}.randomRotate =false;
+%             net_gpu.layers{1}.rowColShift =repmat(chosenRot,[1,BatchSize]);
+            produceDataParam(DataParam,BatchSize);
             res = vl_simplenn(net_gpu,cur_image);
             [m,MAXIND] = max(res(end-1).x,[],3);
             ctemp = 1-AM_entropy(sigmoid(gather(res(end-1).x),'sigmoid'),1);

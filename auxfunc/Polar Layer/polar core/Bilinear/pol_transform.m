@@ -24,12 +24,12 @@ function [output_args_dzdx,DataParamDer]  = pol_transform( input_args,DataParam,
 %                           ]
 doder = nargout >1;
 if isempty(DataParam)
-DataParam.rmin = 0;
-DataParam.rmax =1;
-DataParam.col0 = 0;
-DataParam.row0 = 0;
-DataParam.theta0 = 0;
-
+    DataParam.rmin = 0;
+    DataParam.rmax =1;
+    DataParam.col0 = 0;
+    DataParam.row0 = 0;
+    DataParam.theta0 = 0;
+    
 end
 if ~doder
     rmin = DataParam.rmin; % 0 : inf
@@ -41,11 +41,11 @@ if ~doder
     Grid = createGrid(rmin,rmax,theta0,row0,col0,SIZE);
     output_args_dzdx = vl_nnbilinearsampler(input_args,Grid);
 else
-    rmin = DataParam.rmin;
-    rmax = DataParam.rmax;
-    row0 = DataParam.row0;
-    col0 = DataParam.col0;
-    theta0 = DataParam.theta0;
+    rmin = DataParam.rmin; % 0 : inf
+    rmax = DataParam.rmax; % 0 : inf
+    row0 = DataParam.row0;% -1 : 1
+    col0 = DataParam.col0; % -1 : 1
+    theta0 = DataParam.theta0; % 0 : 2pi
     DataParamDer = DataParam;
     SIZE = size(input_args,2);
     Grid = createGrid(rmin,rmax,theta0,row0,col0,SIZE);
@@ -55,6 +55,8 @@ else
         ,DataParamDer.theta0...
         ,DataParamDer.row0...
         ,DataParamDer.col0] = createGrid(rmin,rmax,theta0,row0,col0,SIZE,dzdGrid);
+    
+    
 end
 end
 
@@ -63,6 +65,11 @@ function [grid,dzdrmin,dzdrmax,dzdtheta0,dzdrow0,dzdcol0] =  createGrid(rmin,rma
 % SIZE is scalar
 % dzdGrid 2*SIZE*SIZE*B
 % gridR
+rmin = permute(rmin,[2,3,4,1]); % 0 : inf
+rmax = permute(rmax,[2,3,4,1]); % 0 : inf
+row0 = permute(row0,[2,3,4,1]);% -1 : 1
+col0 = permute(col0,[2,3,4,1]); % -1 : 1
+theta0 = permute(theta0,[2,3,4,1]);
 doder = nargout>1;
 if ~doder
     %% results
@@ -78,7 +85,7 @@ if ~doder
     colCoordinates = bsxfun(@plus,colCoordinates,col0);
     % row and col coord is S*S*1*B
     sq_row_c = permute(rowCoordinates,[3,1,2,4]);
-    sq_col_c = squeeze(colCoordinates,[3,1,2,4]);
+    sq_col_c = permute(colCoordinates,[3,1,2,4]);
     grid = cat(1,sq_row_c,sq_col_c);
 else
     LinSpaceR = createLinR(rmin,rmax,SIZE);
@@ -99,77 +106,87 @@ else
     dzdLinSpaceR_2 = sum(dzdLinSpaceR_2,2);
     
     dzdLinSpaceTheta_1 = bsxfun(@times,LinSpaceR,-sin(LinSpaceTheta));
-    dzdLinSpaceTheta_1 = sum(1,dzdLinSpaceTheta_1);
+    dzdLinSpaceTheta_1 = bsxfun(@times,dzdrowCoordinates,dzdLinSpaceTheta_1);
+    dzdLinSpaceTheta_1 = sum(dzdLinSpaceTheta_1,1);
     
     dzdLinSpaceTheta_2 = bsxfun(@times,LinSpaceR,cos(LinSpaceTheta));
-    dzdLinSpaceTheta_2 = sum(1,dzdLinSpaceTheta_2);
+    dzdLinSpaceTheta_2 = bsxfun(@times,dzdLinSpaceTheta_2,dzdcolCoordinates);
+    dzdLinSpaceTheta_2 = sum(dzdLinSpaceTheta_2,1);
     
     dzdLinSpaceR = dzdLinSpaceR_1 + dzdLinSpaceR_2;
     dzdLinSpaceTheta = dzdLinSpaceTheta_1 + dzdLinSpaceTheta_2;
     
     [~,dzdtheta0] = createLinTheta(theta0,SIZE,dzdLinSpaceTheta);
     [~,dzdrmin,dzdrmax] = createLinR(rmin,rmax,SIZE,dzdLinSpaceR);
+    dzdrmin = dzdrmin(:);
+    dzdrmax = dzdrmax(:);
+    dzdtheta0 = dzdtheta0(:);
+    dzdrow0 = dzdrow0(:);
+    dzdcol0 = dzdcol0(:);
+    grid =[];
     
 end
 end
 function [Linspace,dzdtheta0] = createLinTheta(theta0,SIZE,dzdLinSpace)
-    % SIZE is scalar
-    % theta0 is 1*1*1*B
-    % LinSpace is 1*SIZE*1*B
-    % dzdLinSpace is 1*SIZE*1*B
-    doder = nargout>1;
-    range = 2*pi;
-    if ~doder
-        %% calculate results
-        % Linspace = theta0 + (i-1)*(2*pi)/(SIZE-1);
-        iArray = gpuArray.colon(0,SIZE-1)*range/(SIZE-1);
-        % iArray is 1*SIZE
-        assert(ndims(theta0) == 4 | numel(theta0)==1, 'dimensions of rmin must be 4 instead : %d',ndims(theta0));
-        Linspace = bsxfun(@pluse,iArray,theta0);
-        
-    else
-        %% calculate derivative
-        % dLinspace(i)dtheta0 = 1;
-        dzdtheta0 = sum(2,dzdLinSpace);
-    end
+% SIZE is scalar
+% theta0 is 1*1*1*B
+% LinSpace is 1*SIZE*1*B
+% dzdLinSpace is 1*SIZE*1*B
+doder = nargout>1;
+range = 2*pi;
+if ~doder
+    %% calculate results
+    % Linspace = theta0 + (i-1)*(2*pi)/(SIZE-1);
+    iArray = gpuArray.colon(0,SIZE-1)*range/(SIZE-1);
+    % iArray is 1*SIZE
+    assert(ndims(theta0) == 4 | numel(theta0)==1, 'dimensions of rmin must be 4 instead : %d',ndims(theta0));
+    Linspace = bsxfun(@plus,iArray,theta0);
+    
+else
+    %% calculate derivative
+    % dLinspace(i)dtheta0 = 1;
+    Linspace = [];
+    dzdtheta0 = sum(dzdLinSpace,2);
+end
 end
 function [LinSpace,dzdrmin,dzdrmax] = createLinR(rmin,rmax,SIZE,dzdLinSpace)
-    % rmin is 1*1*1*b
-    % rmax is 1*1*1*b
-    % dzdLinSpace is SIZE*1*1*B
-    % LinSpace is SIZE*1*1*B
-    % dzdrmin is 1*B
-    % dzdrmax is 1*B
-    doder = nargout>1;
-    if doder
-        %% calculate Derivative
-        %dLinSpace(i)_drmin = 1 + (1-i)*/(SIZE-1);
-        iArray = gpuArray.colon(0,SIZE-1)'/(SIZE-1);
-        %iArray is SIZE * 1;
-        iArray_max = bsxfun(@plus,iArray,1);
-        iArray_min = bsxfun(@plus,-iArray,1);
-        
-        iArray_max_projected = bsxfun(@times,iArray_max, dzdLinSpace);
-        iArray_min_projected = bsxfun(@times,iArray_min,dzdLinSpace);
-        
-        dzdrmin = sum(1,iArray_min_projected);
-        dzdrmax = sum(1,iArray_max_projected);
-    else
-        %% calculate Results
-        % LinSpace(i)= rmin + (i-1)*(rmax - rmin)/(SIZE-1);
-        assert(ndims(rmin) == 4 | numel(rmin) == 1,...
-            'dimensions of rmin must be 4 instead : %d',ndims(rmin));
-        assert(ndims(rmax) == 4 | numel(rmin) == 1,...
-            'dimensions of rmax must be 4 instead : %d',ndims(rmin));
-        Step = rmax - rmin;
-        %Step is 1*1*1*B
-        LinSpaceBeans = gpuArray.colon(0,(SIZE-1))';
-        %linspace beans is SIZE*1;
-        LinSpace = bsxfun(@times,LinSpaceBeans,Step/(SIZE-1));
-        %Linspace is SIZE*1*1*B
-        LinSpace = bsxfun(@plus,LinSpace,rmin);
-        %Linspace is SIZE*1*1*B
-    end
+% rmin is 1*1*1*b
+% rmax is 1*1*1*b
+% dzdLinSpace is SIZE*1*1*B
+% LinSpace is SIZE*1*1*B
+% dzdrmin is 1*B
+% dzdrmax is 1*B
+doder = nargout>1;
+if doder
+    %% calculate Derivative
+    %dLinSpace(i)_drmin = 1 + (1-i)*/(SIZE-1);
+    iArray = gpuArray.colon(0,SIZE-1)'/(SIZE-1);
+    %iArray is SIZE * 1;
+    iArray_max = bsxfun(@plus,iArray,0);
+    iArray_min = bsxfun(@plus,-iArray,1);
     
+    iArray_max_projected = bsxfun(@times,iArray_max, dzdLinSpace);
+    iArray_min_projected = bsxfun(@times,iArray_min,dzdLinSpace);
+    
+    dzdrmin = sum(iArray_min_projected,1);
+    dzdrmax = sum(iArray_max_projected,1);
+    LinSpace = [];
+else
+    %% calculate Results
+    % LinSpace(i)= rmin + (i-1)*(rmax - rmin)/(SIZE-1);
+    assert(ndims(rmin) == 4 | numel(rmin) == 1,...
+        'dimensions of rmin must be 4 instead : %d',ndims(rmin));
+    assert(ndims(rmax) == 4 | numel(rmin) == 1,...
+        'dimensions of rmax must be 4 instead : %d',ndims(rmin));
+    Step = rmax - rmin;
+    %Step is 1*1*1*B
+    LinSpaceBeans = gpuArray.colon(0,(SIZE-1))';
+    %linspace beans is SIZE*1;
+    LinSpace = bsxfun(@times,LinSpaceBeans,Step/(SIZE-1));
+    %Linspace is SIZE*1*1*B
+    LinSpace = bsxfun(@plus,LinSpace,rmin);
+    %Linspace is SIZE*1*1*B
+end
+
 end
 

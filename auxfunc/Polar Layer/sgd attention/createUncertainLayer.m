@@ -38,7 +38,7 @@ function out = calcUncertainty(layer,resi,resip1)
             out = resip1;
             softIn = calcSoftmax(layer,resi.x);
             out.x = 1 - calcEntropySoft(layer,softIn);
-        
+            
 
     else 
         assert(false,'uncertainty type unknown');

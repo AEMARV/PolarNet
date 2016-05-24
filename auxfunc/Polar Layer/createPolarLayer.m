@@ -51,9 +51,7 @@ function resip1 =  pol_transform_wrapper_forward(layer,resi,resip1)
 
     
     dataParam = resi.DataParam;
-    if isempty(centers)
-        error('centers are empty matrix');
-    end
+
     
     resip1.x = pol_transform(resi.x,dataParam,layer);
 
@@ -61,10 +59,8 @@ end
 function resi = pol_transform_wrapper_backward(layer,resi,resip1)
 %    opts = layer.opts;
     
-    dataParam = layer.DataParam;
-    if isempty(centers)
-        error('centers are empty matrix');
-    end
+    dataParam = resi.DataParam;
+  
     dzdpol = resip1.dzdx;
     [resi.dzdx,resi.dzdDataParam] = pol_transform(resi.x,dataParam,dzdpol);
 end
@@ -74,13 +70,6 @@ function shifted = shiftAll(x,shiftAmount,rowType,colType)
 % rowType specified the 
 shifted = shiftFirstDim(x,shiftAmount(1,:)',rowType);
 shifted = permute(shiftFirstDim(permute(shifted,[2,1,3,4]),shiftAmount(2,:)',colType),[2,1,3,4]);
-
-
-% colNum = size(x,2);
-% shifted = x;
-% ind = 0: colNum-1; % 0 15
-% indNew = mod((ind + shiftAmount),colNum) +1 ;% SA : 15+SA -> SA : 15 : 0: SA -1
-% shifted(:,ind+1,:,:) = x(:,indNew,:,:);
 end
 function shifted = shiftFirstDim(x,shiftAmount,type)
 SIZE = size(x);

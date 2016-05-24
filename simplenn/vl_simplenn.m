@@ -1,4 +1,4 @@
-function res = vl_simplenn(net, x, dzdy, res, varargin)
+function res = vl_simplenn(net, x,DataParam, dzdy, res, varargin)
 %VL_SIMPLENN  Evaluate a SimpleNN network.
 %   RES = VL_SIMPLENN(NET, X) evaluates the convnet NET on data X.
 %   RES = VL_SIMPLENN(NET, X, DZDY) evaluates the convnent NET and its
@@ -236,7 +236,7 @@ n = numel(net.layers) ;
 assert(opts.backPropDepth > 0, 'Invalid `backPropDepth` value (!>0)');
 backPropLim = max(n - opts.backPropDepth + 1, 1);
 
-if (nargin <= 2) || isempty(dzdy)
+if (nargin <= 3) || isempty(dzdy)
   doder = false ;
   if opts.skipForward
     error('simplenn:skipForwardNoBackwPass', ...
@@ -263,13 +263,14 @@ end
 
 gpuMode = isa(x, 'gpuArray') ;
 
-if nargin <= 3 || isempty(res)
+if nargin <= 4 || isempty(res)
   if opts.skipForward
     error('simplenn:skipForwardEmptyRes', ...
     'RES structure must be provided for `skipForward`.');
   end
   res = struct(...
     'x', cell(1,n+1), ...
+    'DataParam',cell(1,n+1), ...
     'dzdx', cell(1,n+1), ...
     'dzdw', cell(1,n+1), ...
     'aux', cell(1,n+1), ...
@@ -280,6 +281,7 @@ end
 
 if ~opts.skipForward
   res(1).x = x ;
+  res(1).DataParam = DataParam;
 end
 
 
@@ -480,6 +482,7 @@ if doder
       case 'custom'
         res(i).dzdrow = [];
         res(i).dzdcol = [];
+        res(i).dzdDataParam = [];
         res(i) = l.backward(l, res(i), res(i+1)) ;
 
     end % layers

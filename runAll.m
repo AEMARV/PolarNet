@@ -25,7 +25,7 @@ switch typePolar
         warning('setting the polar type to default: linear \n')
         typePolar = 1;
 end
-contnu = false;% continue parameter
+contnu =true;% continue parameter
 usePolar = true;
 useUncertainty = true;
 useGmm = false;
@@ -39,7 +39,7 @@ uncOpts = [];
 %% uncertainty option
 atten_LR = 0.1;
 isNormalize = false;
-isMaximize = false; % if set maximizes the certainty when moving
+isMaximize = true; % if set maximizes the certainty when moving
 if useUncertainty
 uncOpts = updateOptsUnc('atten_LR',atten_LR...
     ,'isNormalize',isNormalize...
@@ -61,7 +61,8 @@ polarOpts = updateOptsPolar(...
 
 cnn_cifar('train',struct('gpus',1),'expDir',expDir...
     ,'usePolar',polarOpts.usePolar...
-    ,'polarOpts',polarOpts);
+    ,'polarOpts',polarOpts...
+    ,'continue',contnu);
 runCreateVideo('imdbPath',expDir...
     ,'netPath',expDir...
     ,'movieOutPathBase',fullfile(expDir,'Vids'));
