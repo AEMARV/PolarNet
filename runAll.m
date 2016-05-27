@@ -5,7 +5,7 @@ function out = runALL(varargin)
 opts.expDir = fullfile(pwd,'results');
 expDir = opts.expDir;
 opts=vl_argparse(opts,varargin)
-skip = false;
+skip = true;
 
 if skip
     runCreateVideo();
@@ -25,7 +25,7 @@ switch typePolar
         warning('setting the polar type to default: linear \n')
         typePolar = 1;
 end
-contnu =true;% continue parameter
+contnu =false;% continue parameter
 usePolar = true;
 useUncertainty = true;
 useGmm = false;
@@ -37,7 +37,7 @@ interval = 0;
 extrapvalue = 0;
 uncOpts = [];
 %% uncertainty option
-atten_LR = 0.1;
+atten_LR = 0.001;
 isNormalize = false;
 isMaximize = true; % if set maximizes the certainty when moving
 if useUncertainty

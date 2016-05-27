@@ -310,7 +310,7 @@ for t=1:opts.batchSize:numel(subset)
       evalMode = 'test' ;
     end
     net.layers{end}.class = labels ;
-    if opts.usePolar & state.epoch > 6
+    if opts.usePolar  && opts.polarOpts.useUncertainty
     res_c = res;
     [net,state.imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im,isFliped,state.imdb,batch,opts,s,res_c);
     DataParam = res_c(1).DataParam;

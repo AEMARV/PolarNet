@@ -39,7 +39,7 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
    % s is the batch number
    cartResIndex = 1;
    if ~opts.polarOpts.useUncertainty && ~isempty(res_c)
-        [res_c,imdb,~] = getDataParamImdb(imdb,batch,isFliped);     
+        [res_c(1).DataParam,imdb,~] = getDataParamImdb(imdb,batch,isFliped);     
         return
    end
    atten_LR = opts.polarOpts.uncOpts.atten_LR;
@@ -58,7 +58,9 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
        return;
    end
    unc_net = net;
+   if strcmp(evalMode,'test')
    [unc_net.layers{end},~,~] = createUncertainLayer();
+   end
    unc_net =vl_simplenn_tidy(unc_net);
    if isMaximize
        dzdyunc = gpuArray(1);
@@ -78,16 +80,7 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
   res_c(cartResIndex).DataParam = DataParamUpd;
         
 end
-function stout =  stepStruct(st1,st2,LR)
-stout = st1;
-Learn = @(point,gradient,LR)point-(gradient.*LR);
-Fnames = fieldnames(st1);
-for i = 1:numel(Fnames)
-    i = floor(rand * (numel(Fnames)-1)) + 1;
-    stout.(Fnames{i}) = Learn(st1.(Fnames{i}),st2.(Fnames{i}),LR);
-    break;
-end
-end
+
 function stout = multStruct(st,multip)
 Fnames = fieldNames(st1);
 cell_st1 = struct2cell(st1);
