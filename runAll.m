@@ -37,7 +37,7 @@ interval = 0;
 extrapvalue = 0;
 uncOpts = [];
 %% uncertainty option
-atten_LR = 0.01;
+atten_LR = 0.001;
 isNormalize = false;
 isMaximize = true; % if set maximizes the certainty when moving
 if useUncertainty
