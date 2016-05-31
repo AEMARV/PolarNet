@@ -58,7 +58,7 @@ function [net,imdb,res_c] = vl_simplenn_polar_updateCenter(net,evalMode,im ,isFl
        return;
    end
    unc_net = net;
-   if strcmp(evalMode,'test')
+   if strcmp(evalMode,'test') && false
    [unc_net.layers{end},~,~] = createUncertainLayer();
    end
    unc_net =vl_simplenn_tidy(unc_net);
