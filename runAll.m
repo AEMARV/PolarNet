@@ -27,7 +27,7 @@ switch typePolar
 end
 contnu =false;% continue parameter
 usePolar = true;
-useUncertainty = true;
+useUncertainty = false;
 useGmm = false;
 upSampleRate =double(2);
 DownSampleRate = double(2);

@@ -334,7 +334,8 @@ for i=1:n
 
     case 'sigmoid'
       res(i+1).x = vl_nnsigmoid(res(i).x) ;
-
+      case 'tanh'
+          res(i+1).x = 2*vl_nnsigmoid(res(i).x)-1 ;
     case 'noffset'
       res(i+1).x = vl_nnnoffset(res(i).x, l.param) ;
 
@@ -429,6 +430,7 @@ if doder
 
       case 'softmax'
         res(i).dzdx = vl_nnsoftmax(res(i).x, res(i+1).dzdx) ;
+        
 
       case 'loss'
         res(i).dzdx = vl_nnloss(res(i).x, l.class, res(i+1).dzdx) ;
@@ -448,6 +450,8 @@ if doder
 
       case 'sigmoid'
         res(i).dzdx = vl_nnsigmoid(res(i).x, res(i+1).dzdx) ;
+        case 'tanh'
+        res(i).dzdx = vl_nnsigmoid((res(i).x+1)/2, res(i+1).dzdx * 2) ;
 
       case 'noffset'
         res(i).dzdx = vl_nnnoffset(res(i).x, l.param, res(i+1).dzdx) ;

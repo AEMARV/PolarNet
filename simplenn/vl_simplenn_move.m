@@ -35,9 +35,10 @@ for l=1:numel(net.layers)
                 end
             end
         case 'custom'
-           f= 'kernel';
+           f= 'LocatorNet';
            if isfield(net.layers{l},f)
-               net.layers{l}.(f) = moveop(net.layers{l}.(f));
+               
+               net.layers{l}.(f) = vl_simplenn_move(net.layers{l}.(f),destination);
            end
         otherwise
             

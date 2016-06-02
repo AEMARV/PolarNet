@@ -49,6 +49,7 @@ for ep = 1 :numEpochs
 %             net_gpu.layers{1}.rowColShift =repmat(chosenRot,[1,BatchSize]);
             ThisDataParam_rep.row0 = r0(k:k+BatchSize-1)';
             ThisDataParam_rep.col0 = c0(k:k+BatchSize-1)';
+            net_gpu.layers{1}.useCenters = true;
             res = vl_simplenn(net_gpu,cur_image,ThisDataParam_rep);
             [m,MAXIND] = max(res(end-1).x,[],3);
             ctemp = 1-AM_entropy(sigmoid(gather(res(end-1).x),'sigmoid'),1);

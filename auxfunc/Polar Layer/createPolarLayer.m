@@ -37,6 +37,11 @@ layer.typePolar = opts.type;
 layer.filterSigma = opts.filterSigma;
 layer.randomRotate = opts.randomRotate;
 layer.rotatePix = 0;
+layer.useLocator = true;
+layer.LocatorNet = cnn_cifar_init_loc();
+layer.LocatorRes = [];
+layer.epoch = 0;
+layer.useCenters = false;
 if isfield(opts,'rmin')
     layer.rmin = opts.rmin;
     layer.rmax = opts.rmax;
@@ -48,21 +53,52 @@ layer.DataParam = [];
 
 end
 function resip1 =  pol_transform_wrapper_forward(layer,resi,resip1)
-
-    
-    dataParam = resi.DataParam;
-
-    
+    LOCATE = layer.useLocator && layer.epoch > 5;
+    if LOCATE
+        % resip1.aux is the forward pass result
+        [resip1.DataParam,resip1.aux] = locate(layer.LocatorNet,resi.x,resip1.aux,resi.DataParam);
+        StructVerifier(resip1.DataParam,'dataparam');
+        dataParam = resip1.DataParam;
+        if layer.useCenters
+            dataParam.row0 = resi.DataParam.row0;
+            dataParam.col0 = resi.DataParam.col0;
+        end
+    else
+        [resip1.DataParam,resip1.aux] = locate(layer.LocatorNet,resi.x,resip1.aux,resi.DataParam);
+        dataParam = resi.DataParam;
+        StructVerifier(dataParam,'dataparam');
+    end
     resip1.x = pol_transform(resi.x,dataParam,layer);
-
+   
 end
 function resi = pol_transform_wrapper_backward(layer,resi,resip1)
 %    opts = layer.opts;
-    
-    dataParam = resi.DataParam;
+    LOCATE = layer.useLocator && layer.epoch > 5 ;
+    if LOCATE
+    dataParam = resip1.DataParam;
+    else
+        dataParam = resi.DataParam;
+    end
   
     dzdpol = resip1.dzdx;
     [resi.dzdx,resi.dzdDataParam] = pol_transform(resi.x,dataParam,dzdpol);
+    resi.dzdDataParam = regrminrmax(resi.dzdDataParam,dataParam);
+    if LOCATE
+    [resi.aux,resip1.aux] = backPropLocator(layer.LocatorNet,resi.x,resip1.aux,resi.dzdDataParam,   layer);
+    else
+          resi.aux = layer.LocatorNet;
+          
+%         dzdDataParam = (-dataParam2arr(   createBaseDP(resi.dzdDataParam))+dataParam2arr(resip1.DataParam));
+%         dzdDataParam = arr2dataparam(sign(dzdDataParam),resi.dzdDataParam);
+%         [resi.aux,resip1.aux] = backPropLocator(layer.LocatorNet,resi.x,resip1.aux,dzdDataParam,   layer);
+    end
+end
+function dzdDataParam = regrminrmax(dzdDataParam,DataParam)
+    IndRmin = find(DataParam.rmin < 0);
+    dzdDataParam.rmin(IndRmin) = dzdDataParam.rmin(IndRmin) -1;
+    IndRminRmax = find(DataParam.rmin > DataParam.rmax);
+    dzdDataParam.rmin(IndRminRmax) = dzdDataParam.rmin(IndRminRmax) +1;
+    dzdDataParam.rmax(IndRminRmax) = dzdDataParam.rmax(IndRminRmax) -1;
 end
 function shifted = shiftAll(x,shiftAmount,rowType,colType)
 % shifts x where x is M*N*C*B according to shiftAmount where
@@ -88,6 +124,93 @@ newRowSub = bsxfun(@plus,rowSub,shiftAmount);
 Ind = sub2ind(size(shifted),newRowSub,colSub,chSub,Bsub);
 shifted = shifted(Ind);
 end
-function AM_pad(x,padAmount,type)
-arrayfun
+function [dataParam,res] = locate(net_gpu,im,res,dataParam)
+BATCH_SIZE = size(im,4);
+res = vl_simplenn(net_gpu,im,[],[],res,'CuDNN',true);
+dataParamArr =res(end).x;
+dataParamArr = squeeze(permute(dataParamArr,[4,3,2,1]));
+Fnames = fieldnames(dataParam);
+for i = 1 : numel(Fnames)
+    dataParam.(Fnames{i}) = dataParamArr(:,i);
+end
+end
+function [net,res] = backPropLocator(net,im,res,dzdDataParam,layer)
+    
+    dzd_DP_arr = dataParam2arr(dzdDataParam);
+    dzd_DP_arr = ipermute(dzd_DP_arr,[4,3,2,1]);
+    if ~isempty(res)
+    res(end).dzdx = dzd_DP_arr;
+    end
+    res = vl_simplenn(net,im,[],dzd_DP_arr,res,'CuDNN',true,'SkipForward',true);
+    net = Learn(net,res,layer);
+end
+function DParr = dataParam2arr(DP)
+    Fnames = fieldnames(DP);
+    BATCHSIZE = size(DP.(Fnames{1}),1);
+    paramNum = numel(Fnames);
+    DParr =  gpuArray.zeros([BATCHSIZE,paramNum],'single');
+    for i = 1 : paramNum
+        DParr(:,i) = DP.(Fnames{i});
+    end
+end
+function DP = arr2dataparam(DParr,DP)
+    Fnames = fieldnames(DP);
+    BATCHSIZE = size(DP.(Fnames{1}),1);
+    paramNum = numel(Fnames);
+    DParr =  gpuArray.zeros([BATCHSIZE,paramNum],'single');
+    for i = 1 : paramNum
+       DP.(Fnames{i}) = DParr(:,i);
+    end
+end
+function DP = createBaseDP(DP)
+Fnames = fieldnames(DP);
+    BATCHSIZE = size(DP.(Fnames{1}),1);
+    paramNum = numel(Fnames);
+    for i = 1 : paramNum
+        switch Fnames{i}
+            case 'rmin'
+                arr = gpuArray.zeros(BATCHSIZE,1);
+            case 'rmax'
+                arr = gpuArray.ones(BATCHSIZE,1);
+            case 'theta0'
+                arr = gpuArray.zeros(BATCHSIZE,1);
+            case 'row0'
+                arr = gpuArray.zeros(BATCHSIZE,1);
+            case 'col0'
+                arr = gpuArray.zeros(BATCHSIZE,1);
+            otherwise
+                error('invalid field name')
+        end
+       DP.(Fnames{i}) = arr;
+    end
+    
+end
+
+function net = Learn(net,res,layer)
+trainOpts = net.meta.trainOpts;
+batchSize = trainOpts.batchSize;
+LR = trainOpts.learningRate(layer.epoch);
+for l=numel(net.layers):-1:1
+  for j=1:numel(res(l).dzdw)
+
+    % accumualte gradients from multiple labs (GPUs) if needed
+   
+
+    if j == 3 && strcmp(net.layers{l}.type, 'bnorm')
+      % special case for learning bnorm moments
+      thisLR = net.layers{l}.learningRate(j) ;
+      net.layers{l}.weights{j} = ...
+        (1 - thisLR) * net.layers{l}.weights{j} + ...
+        (thisLR/batchSize) * res(l).dzdw{j} ;
+    else
+      % standard gradient training
+      thisDecay = trainOpts.weightDecay * 1 ;
+      thisLR = LR * net.layers{l}.learningRate(j) ;
+      Grad = - thisDecay * net.layers{l}.weights{j} ...
+        - (1 / batchSize) * res(l).dzdw{j} ;
+      net.layers{l}.weights{j} = net.layers{l}.weights{j} + ...
+        thisLR * Grad ;
+    end
+  end
+end
 end
