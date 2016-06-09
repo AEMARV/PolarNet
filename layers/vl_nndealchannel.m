@@ -1,10 +1,23 @@
 function y_dzdx = vl_nndealchannel(layer,resi,dzdy)
     in = resi.x;
-    SIZE = in;
+    SIZE = size(in);
+    batchsize = layer.batchsize;
+    dealback = false;
+    if SIZE(4) ~= batchsize
+        dealback = true;
+    end
     if nargin<3
-        y_dzdx = reshape(resi.x,SIZE(1),SIZE(2),1,[]);
+        if dealback
+        y_dzdx = reshape(resi.x,SIZE(1),SIZE(2),[],batchsize);
+        else
+            y_dzdx = reshape(resi.x,SIZE(1),SIZE(2),1,[]);
+        end
     else
-        y_dzdx = reshape(dzdy,SIZE(1),SIZE(2),SIZE(3),SIZE(4));
+        if dealback
+        y_dzdx = reshape(dzdy,SIZE(1),SIZE(2),1,[]);
+        else
+            y_dzdx = reshape(dzdy,SIZE(1),SIZE(2),[],batchsize);
+        end
     end
     
 end

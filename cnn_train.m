@@ -33,7 +33,7 @@ opts.randomSeed = 0 ;
 opts.memoryMapFile = fullfile(tempdir, 'matconvnet.bin') ;
 opts.profile = false ;
 
-opts.conserveMemory = true ;
+opts.conserveMemory = false ;
 opts.backPropDepth = +inf ;
 opts.sync = false ;
 opts.cudnn = true ;
@@ -351,7 +351,7 @@ for t=1:opts.batchSize:numel(subset)
 
   % collect diagnostic statistics
   if strcmp(mode, 'train') && opts.plotDiagnostics
-    switchfigure(2) ; clf ;
+    switchFigure(2) ; clf ;
     diagn = [res.stats] ;
     diagnvar = horzcat(diagn.variation) ;
     barh(diagnvar) ;
@@ -414,8 +414,9 @@ for l=numel(net.layers):-1:1
       state.layers{l}.momentum{j} = opts.momentum * state.layers{l}.momentum{j} ...
         - thisDecay * net.layers{l}.weights{j} ...
         - (1 / batchSize) * res(l).dzdw{j} ;
+     
       net.layers{l}.weights{j} = net.layers{l}.weights{j} + ...
-        thisLR * state.layers{l}.momentum{j} ;
+        double(thisLR * state.layers{l}.momentum{j}) ;
     end
 
     % if requested, collect some useful stats for debugging
