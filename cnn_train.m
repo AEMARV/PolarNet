@@ -416,7 +416,7 @@ for l=numel(net.layers):-1:1
         - (1 / batchSize) * res(l).dzdw{j} ;
      
       net.layers{l}.weights{j} = net.layers{l}.weights{j} + ...
-        double(thisLR * state.layers{l}.momentum{j}) ;
+        maskgrad(double(thisLR * state.layers{l}.momentum{j})) ;
     end
 
     % if requested, collect some useful stats for debugging
