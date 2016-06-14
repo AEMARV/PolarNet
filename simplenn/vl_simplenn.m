@@ -368,6 +368,10 @@ for i=1:n
             res(i+1).x = vl_nnexp(l,res(i));
         case 'dealchannel'
             res(i+1).x = vl_nndealchannel(l,res(i));
+        case 'graddrop'
+            res(i+1).x = vl_nngraddrop(l,res(i));
+        case 'logsigm'
+            res(i+1).x = vl_nnlogsigm(l,res(i));
         case 'custom'
             res(i+1) = l.forward(l, res(i), res(i+1)) ;
             
@@ -491,6 +495,10 @@ if doder
                     'instanceWeights', l.instanceWeights) ;
             case 'log'
                 res(i).dzdx = vl_nnlog(l,res(i),res(i+1).dzdx);
+                case 'logsigm'
+                res(i).dzdx = vl_nnlogsigm(l,res(i),res(i+1).dzdx);
+            case 'graddrop'
+                res(i).dzdx  = vl_nngraddrop(l,res(i),res(i+1).dzdx);
             case 'exp'
                 res(i).dzdx = vl_nnexp(l,res(i),res(i+1).dzdx);
             case 'dealchannel'

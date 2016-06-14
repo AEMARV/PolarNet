@@ -413,10 +413,10 @@ for l=numel(net.layers):-1:1
       thisLR = state.learningRate * net.layers{l}.learningRate(j) ;
       state.layers{l}.momentum{j} = opts.momentum * state.layers{l}.momentum{j} ...
         - thisDecay * net.layers{l}.weights{j} ...
-        - (1 / batchSize) * res(l).dzdw{j} ;
+        - (1 / batchSize) * res(l).dzdw{j} ; % instead of 1 put 1/batchSize
      
       net.layers{l}.weights{j} = net.layers{l}.weights{j} + ...
-        maskgrad(double(thisLR * state.layers{l}.momentum{j})) ;
+        (double(thisLR * state.layers{l}.momentum{j})) ;
     end
 
     % if requested, collect some useful stats for debugging
