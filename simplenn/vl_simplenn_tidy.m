@@ -39,6 +39,7 @@ for l = 1:numel(net.layers)
   % check weights format
   switch layer.type
     case {'conv', 'convt', 'bnorm'}
+   
       if ~isfield(layer, 'weights')
         layer.weights = {...
           layer.filters, ...
@@ -46,9 +47,12 @@ for l = 1:numel(net.layers)
         layer = rmfield(layer, 'filters') ;
         layer = rmfield(layer, 'biases') ;
       end
+    layer.acc = setCellNum( layer.weights,0);
+    layer.veloc = setCellNum(layer.weights,0);
   end
   if ~isfield(layer, 'weights')
     layer.weights = {} ;
+    
   end
 
   % check that weights inlcude moments in batch normalization

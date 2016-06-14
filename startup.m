@@ -6,3 +6,4 @@ addpath(genpath('./auxfunc'));
 addpath(genpath('./simplenn'));
 addpath(genpath('./layers'));
 addpath(genpath('./HyperParamIO'));
+addpath(genpath('./generalfuncs'));
