@@ -33,8 +33,8 @@ opts.randomSeed = 0 ;
 opts.memoryMapFile = fullfile(tempdir, 'matconvnet.bin') ;
 opts.profile = false ;
 opts.worldG = 100;
-opts.worldFriction = 0.0001;
-opts.worldTimeQuantum = 0.1;
+opts.worldFriction = 0;
+opts.worldTimeQuantum = 0.001;
 opts.conserveMemory = false ;
 opts.backPropDepth = +inf ;
 opts.sync = false ;
@@ -409,23 +409,27 @@ for l=numel(net.layers):-1:1
       net.layers{l}.weights{j} = ...
         (1 - thisLR) * net.layers{l}.weights{j} + ...
         (thisLR/batchSize) * res(l).dzdw{j} ;
-    calcAcc()
+    
     else
       % standard gradient training
-%       thisDecay = opts.weightDecay * net.layers{l}.weightDecay(j) ;
-%       thisLR = state.learningRate * net.layers{l}.learningRate(j) ;
-%       state.layers{l}.momentum{j} = opts.momentum * state.layers{l}.momentum{j} ...
-%         - thisDecay * net.layers{l}.weights{j} ...
-%         - (1 / batchSize) * res(l).dzdw{j} ; % instead of 1 put 1/batchSize
-%      
-%       net.layers{l}.weights{j} = net.layers{l}.weights{j} + ...
-%         (double(thisLR * state.layers{l}.momentum{j})) ;
+      Standard = true;
+      if Standard
+       thisDecay = opts.weightDecay * net.layers{l}.weightDecay(j) ;
+       thisLR = state.learningRate * net.layers{l}.learningRate(j) ;
+       state.layers{l}.momentum{j} = opts.momentum * state.layers{l}.momentum{j} ...
+         - thisDecay * net.layers{l}.weights{j} ...
+         - (1 / batchSize) * res(l).dzdw{j} ; % instead of 1 put 1/batchSize
+      
+       net.layers{l}.weights{j} = net.layers{l}.weights{j} + ...
+         (double(thisLR * state.layers{l}.momentum{j})) ;
+      else
     v0 = net.layers{l}.veloc{j};
-    net.layers{l}.acc{j} = calcAcc(res(l).dzdw{j},opts.worldFriction,opts.worldG,v0);
+    net.layers{l}.acc{j} = calcAcc(res(l).dzdw{j}/batchSize,opts.worldFriction,opts.worldG,v0);
     v0 = net.layers{l}.veloc{j};
     a0 = net.layers{l}.acc{j};
     x0 = net.layers{l}.weights{j};
     [net.layers{l}.weights{j},net.layers{l}.veloc{j}] = calcnextpos(x0,v0,a0,opts.worldTimeQuantum);
+      end
     end
 
     % if requested, collect some useful stats for debugging

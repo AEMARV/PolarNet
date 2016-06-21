@@ -372,6 +372,10 @@ for i=1:n
             res(i+1).x = vl_nngraddrop(l,res(i));
         case 'logsigm'
             res(i+1).x = vl_nnlogsigm(l,res(i));
+        case 'stochrelu'
+            res(i+1) = vl_nnstochrelu(res(i),res(i+1));
+        case 'lossboot'
+            res(i+1).x = vl_nnlossboot(res(i).x, l.class) ;
         case 'custom'
             res(i+1) = l.forward(l, res(i), res(i+1)) ;
             
@@ -420,7 +424,7 @@ if doder
           l.opts{:}, ...
           cudnn{:}) ;
                 
-                
+            dummy = 0;    
                 
                 
             case 'convt'
@@ -501,8 +505,12 @@ if doder
                 res(i).dzdx  = vl_nngraddrop(l,res(i),res(i+1).dzdx);
             case 'exp'
                 res(i).dzdx = vl_nnexp(l,res(i),res(i+1).dzdx);
+            case 'stochrelu'
+                res(i).dzdx = vl_nnstochrelu(res(i),res(i+1),res(i+1).dzdx);
             case 'dealchannel'
                 res(i).dzdx = vl_nndealchannel(l,res(i),res(i+1).dzdx);
+            case 'lossboot'
+            res(i).dzdx = vl_nnlossboot(res(i).x, l.class,res(i+1).dzdx) ;
             case 'custom'
                 res(i) = l.backward(l, res(i), res(i+1)) ;
                 
@@ -526,7 +534,7 @@ if doder
         if gpuMode && opts.sync
             wait(gpuDevice) ;
         end
-        res(i).backwardTime = toc(res(i).backwardTime) ;
+        res(i).backwardTime = toc(uint64(res(i).backwardTime)) ;
     end
     if i > 1 && i == backPropLim && opts.conserveMemory && ~net.layers{i}.precious
         res(i).dzdx = [] ;
