@@ -390,7 +390,7 @@ function [state, net] = accumulate_gradients(state, net, res, opts, batchSize, m
 % -------------------------------------------------------------------------
 numGpus = numel(opts.gpus) ;
 otherGpus = setdiff(1:numGpus, labindex) ;
-
+batchSize = res(end).aux;
 for l=numel(net.layers):-1:1
   for j=1:numel(res(l).dzdw)
 
@@ -418,8 +418,7 @@ for l=numel(net.layers):-1:1
        thisLR = state.learningRate * net.layers{l}.learningRate(j) ;
        state.layers{l}.momentum{j} = opts.momentum * state.layers{l}.momentum{j} ...
          - thisDecay * net.layers{l}.weights{j} ...
-         - (1 / batchSize) * res(l).dzdw{j} ; % instead of 1 put 1/batchSize
-      
+         - (1 / batchSize) * res(l).dzdw{j} ; 
        net.layers{l}.weights{j} = net.layers{l}.weights{j} + ...
          (double(thisLR * state.layers{l}.momentum{j})) ;
       else
