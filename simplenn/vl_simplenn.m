@@ -374,8 +374,16 @@ for i=1:n
             res(i+1).x = vl_nnlogsigm(l,res(i));
         case 'stochrelu'
             res(i+1) = vl_nnstochrelu(res(i),res(i+1));
+        case 'stochactive'
+            res(i+1) = vl_nnstochactive(res(i),res(i+1),[],true);
+        case 'birelu'
+            res(i+1).x = em_nnbirelu(res(i).x);
         case 'lossboot'
             res(i+1).x = vl_nnlossboot(res(i).x, l.class) ;
+        case 'dropchannel'
+            res(i+1) = vl_nndropchannel(res(i),res(i+1),[],l.rate);
+        case 'stochreludrop'
+            res(i+1) = vl_nnstochreludrop(res(i),res(i+1),[]);
         case 'custom'
             res(i+1) = l.forward(l, res(i), res(i+1)) ;
             
@@ -417,7 +425,7 @@ if doder
             
             case 'conv'
                
-                      [res(i).dzdx, dzdw{1}, dzdw{2}] = ...
+                       [res(i).dzdx, dzdw{1}, dzdw{2}] = ...
           vl_nnconv(res(i).x, l.weights{1}, l.weights{2}, res(i+1).dzdx, ...
           'pad', l.pad, ...
           'stride', l.stride, ...
@@ -453,7 +461,7 @@ if doder
                 res(i).dzdx = vl_nnloss(res(i).x, l.class, res(i+1).dzdx) ;
                 
             case 'softmaxloss'
-                res(i).dzdx = vl_nnsoftmaxloss(res(i).x, l.class, res(i+1).dzdx) ;
+                [res(i).dzdx,res(i+1).aux] = vl_nnsoftmaxloss(res(i).x, l.class, res(i+1).dzdx) ;
                 
             case 'relu'
                 if l.leak > 0, leak = {'leak', l.leak} ; else leak = {} ; end
@@ -499,18 +507,26 @@ if doder
                     'instanceWeights', l.instanceWeights) ;
             case 'log'
                 res(i).dzdx = vl_nnlog(l,res(i),res(i+1).dzdx);
-                case 'logsigm'
+            case 'logsigm'
                 res(i).dzdx = vl_nnlogsigm(l,res(i),res(i+1).dzdx);
+            case 'dropchannel'
+                res(i).dzdx = vl_nndropchannel(res(i),res(i+1),res(i+1).dzdx);
             case 'graddrop'
                 res(i).dzdx  = vl_nngraddrop(l,res(i),res(i+1).dzdx);
             case 'exp'
                 res(i).dzdx = vl_nnexp(l,res(i),res(i+1).dzdx);
             case 'stochrelu'
                 res(i).dzdx = vl_nnstochrelu(res(i),res(i+1),res(i+1).dzdx);
+            case 'stochactive'
+                res(i).dzdx = vl_nnstochactive(res(i),res(i+1),res(i+1).dzdx,true);
+            case 'birelu'
+                res(i).dzdx = em_nnbirelu(res(i).x,res(i+1).dzdx);
             case 'dealchannel'
                 res(i).dzdx = vl_nndealchannel(l,res(i),res(i+1).dzdx);
             case 'lossboot'
             res(i).dzdx = vl_nnlossboot(res(i).x, l.class,res(i+1).dzdx) ;
+            case 'stochreludrop'
+            res(i).dzdx = vl_nnstochreludrop(res(i),res(i+1),res(i+1).dzdx);
             case 'custom'
                 res(i) = l.backward(l, res(i), res(i+1)) ;
                 
