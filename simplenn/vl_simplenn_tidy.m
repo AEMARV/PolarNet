@@ -49,6 +49,8 @@ for l = 1:numel(net.layers)
       end
     layer.acc = setCellNum( layer.weights,0);
     layer.veloc = setCellNum(layer.weights,0);
+    layer.distance  = zeros(1,2);
+    layer.magnitude = zeros(1,2);
   end
   if ~isfield(layer, 'weights')
     layer.weights = {} ;

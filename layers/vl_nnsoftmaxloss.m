@@ -1,4 +1,4 @@
-function Y = vl_nnsoftmaxloss(X,c,dzdy)
+function [Y,SampledTrained] = vl_nnsoftmaxloss(X,c,dzdy)
 %VL_NNSOFTMAXLOSS CNN combined softmax and logistic loss.
 %   **Deprecated: use `vl_nnloss` instead**
 %
@@ -62,15 +62,19 @@ ex = exp(bsxfun(@minus, X, Xmax)) ;
 if nargin <= 2
   t = Xmax + log(sum(ex,3)) - reshape(X(c_), [sz(1:2) 1 sz(4)]) ;
   Y = sum(sum(sum(mass .* t,1),2),4) ;
+  dummy = 0;
 else
   t = Xmax + log(sum(ex,3)) - reshape(X(c_), [sz(1:2) 1 sz(4)]) ;
   Yforward = (sum(sum(mass .* t,1),2)) ;
  % [~,mask] = maskgrad(Yforward);
-  
+  YforwardMasked = vl_nnstochrelu(log(Yforward));
+  mask = YforwardMasked ~= 0 ;
   Y = bsxfun(@rdivide, ex, sum(ex,3)) ;
   
   Y(c_) = Y(c_) - 1;
   Y = bsxfun(@times, Y, bsxfun(@times, mass, dzdy)) ;
+  %Y = bsxfun(@times,Y,mask);
+  SampledTrained = sum(mask(:));
  % Y = disposeSamples(mask,Y);
 end
 end
