@@ -21,12 +21,13 @@ if ~doder
 else
     X = resi.x(:,:,XInds,:);
     gate = resi.x(:,:,gateInds,:);
+    Xrelued = vl_nnstochrelu(X);
     resip1 = resi.x;
     probs = vl_nnsigmoid(gate);
-    dzdprob = dzdy .* X + calcregder(probs)  ;
+    dzdprob = dzdy .* Xrelued + calcregder(probs)  ;
     dzdgate =  bsxfun(@times,dzdprob , (sampler(probs) - sampler(probs).*sampler(probs)));
     dzdreluedX = bsxfun(@times,dzdy , sampler(probs)) ;
-    dzdX = vl_nnrelu(X,dzdreluedX);
+    dzdX = vl_nnstochrelu(X,dzdreluedX);
     if numel(gateInds) == 1
       resip1(:,:,gateInds,:) = sum(dzdgate,3)*LR;  
     else
