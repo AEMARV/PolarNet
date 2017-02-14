@@ -376,6 +376,8 @@ for i=1:n
             res(i+1) = vl_nnstochrelu(res(i),res(i+1));
         case 'stochactive'
             res(i+1) = vl_nnstochactive(res(i),res(i+1),[],true);
+        case 'birelu'
+            res(i+1).x = em_nnbirelu(res(i).x);
         case 'lossboot'
             res(i+1).x = vl_nnlossboot(res(i).x, l.class) ;
         case 'dropchannel'
@@ -423,7 +425,7 @@ if doder
             
             case 'conv'
                
-                      [res(i).dzdx, dzdw{1}, dzdw{2}] = ...
+                       [res(i).dzdx, dzdw{1}, dzdw{2}] = ...
           vl_nnconv(res(i).x, l.weights{1}, l.weights{2}, res(i+1).dzdx, ...
           'pad', l.pad, ...
           'stride', l.stride, ...
@@ -517,6 +519,8 @@ if doder
                 res(i).dzdx = vl_nnstochrelu(res(i),res(i+1),res(i+1).dzdx);
             case 'stochactive'
                 res(i).dzdx = vl_nnstochactive(res(i),res(i+1),res(i+1).dzdx,true);
+            case 'birelu'
+                res(i).dzdx = em_nnbirelu(res(i).x,res(i+1).dzdx);
             case 'dealchannel'
                 res(i).dzdx = vl_nndealchannel(l,res(i),res(i+1).dzdx);
             case 'lossboot'
